@@ -192,28 +192,59 @@ int main(void)
 		switch (frame.data[5]) {	
 			
 		case 0:
-			gpio_pin_set_dt(&gpio_1, 1);
+			gpio_pin_set_dt(&gpio_1, 0);
 			gpio_pin_set_dt(&gpio_2, 0);
 			gpio_pin_set_dt(&gpio_3, 0);
-			gpio_pin_set_dt(&gpio_4, 0);
+			gpio_pin_set_dt(&gpio_4, 1);
 			break;
 		case 1:
             gpio_pin_set_dt(&gpio_1, 0);
-            gpio_pin_set_dt(&gpio_2, 1);
-            gpio_pin_set_dt(&gpio_3, 0);
+            gpio_pin_set_dt(&gpio_2, 0);
+            gpio_pin_set_dt(&gpio_3, 1);
             gpio_pin_set_dt(&gpio_4, 0);
 			break;
 		case 2:
             gpio_pin_set_dt(&gpio_1, 0);
             gpio_pin_set_dt(&gpio_2, 0);
             gpio_pin_set_dt(&gpio_3, 1);
-            gpio_pin_set_dt(&gpio_4, 0);
+            gpio_pin_set_dt(&gpio_4, 1);
             break;
 		case 3:
             gpio_pin_set_dt(&gpio_1, 0);
+            gpio_pin_set_dt(&gpio_2, 1);
+            gpio_pin_set_dt(&gpio_3, 0);
+            gpio_pin_set_dt(&gpio_4, 0);
+            break;
+		case 4:
+			gpio_pin_set_dt(&gpio_1, 0);
+			gpio_pin_set_dt(&gpio_2, 1);
+			gpio_pin_set_dt(&gpio_3, 0);
+			gpio_pin_set_dt(&gpio_4, 1);
+			break;
+		case 5:
+            gpio_pin_set_dt(&gpio_1, 0);
+            gpio_pin_set_dt(&gpio_2, 1);
+            gpio_pin_set_dt(&gpio_3, 1);
+            gpio_pin_set_dt(&gpio_4, 0);
+			break;
+		case 6:
+            gpio_pin_set_dt(&gpio_1, 0);
+            gpio_pin_set_dt(&gpio_2, 1);
+            gpio_pin_set_dt(&gpio_3, 1);
+            gpio_pin_set_dt(&gpio_4, 1);
+            break;
+		case 7:
+            gpio_pin_set_dt(&gpio_1, 1);
             gpio_pin_set_dt(&gpio_2, 0);
             gpio_pin_set_dt(&gpio_3, 0);
-            gpio_pin_set_dt(&gpio_4, 1);
+            gpio_pin_set_dt(&gpio_4, 0);
+            break;
+			
+		case 8:
+            gpio_pin_set_dt(&gpio_1, 0);
+            gpio_pin_set_dt(&gpio_2, 0);
+            gpio_pin_set_dt(&gpio_3, 0);
+            gpio_pin_set_dt(&gpio_4, 0);
             break;
 		}
 

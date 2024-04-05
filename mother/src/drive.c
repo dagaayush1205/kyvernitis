@@ -11,7 +11,7 @@ enum DiffDriveUpdateType {
 };
 struct DiffDriveConfig {
   float wheel_separation;
-  float wheels_per_side;  // actually 2, but both are controlled by 1 signal
+  int wheels_per_side;  // actually 2, but both are controlled by 1 signal
   float wheel_radius;
 
   float wheel_separation_multiplier;
@@ -24,6 +24,8 @@ struct DiffDrive {
   int previous_update_timestamp;
   const struct DiffDriveOdometryConfig odometry_config;
   struct DiffDriveOdometry* odometry;
+  int (*feedback_callback)(float* feedback_buffer, int buffer_len, int wheels_per_side);
+  int (*velocity_callback)(const float* velocity_buffer, int buffer_len, int wheels_per_side);
 };
 void* diffdrive_init(struct DiffDriveConfig* config) {
   // TODO: Make a constructor here
@@ -41,9 +43,17 @@ void diffdrive_update(struct DiffDrive* drive, struct DiffDriveTwist command) {
   float left_feedback_mean = 0.0;
   float right_feedback_mean = 0.0;
 
+  const int feedback_buffer_size = drive->config.wheels_per_side*2;
+  // First N elements => Left
+  // Next N elements =>  Right
+  float* feedback = malloc(sizeof(float)*feedback_buffer_size); // FIXME: Replace with kmalloc
+  if (drive->feedback_callback(
+        feedback, feedback_buffer_size, drive->config.wheels_per_side)) {
+    // ERROR: Something went wrong while getting feedback
+  }
   for (int i = 0; i < drive->config.wheels_per_side; i++) {
-    const float left_feedback = 0xDEADBEEF; // TODO: Change this
-    const float right_feedback = 0xDEADBEEF; // TODO: Change this
+    const float left_feedback = feedback[i];
+    const float right_feedback = feedback[drive->config.wheels_per_side+i];
 
     if (isnan(left_feedback) || isnan(right_feedback)) {
       // ERROR: One of the wheels gives invalid feedback
@@ -52,6 +62,7 @@ void diffdrive_update(struct DiffDrive* drive, struct DiffDriveTwist command) {
     left_feedback_mean += left_feedback;
     right_feedback_mean += right_feedback;
   }
+  free(feedback); // FIXME: Replace with kfree
   left_feedback_mean /= drive->config.wheels_per_side;
   right_feedback_mean /= drive->config.wheels_per_side;
 
@@ -65,10 +76,16 @@ void diffdrive_update(struct DiffDrive* drive, struct DiffDriveTwist command) {
 
   const float velocity_left = (linear_command - angular_command * wheel_separation / 2.0) / left_wheel_radius;
   const float velocity_right = (linear_command + angular_command * wheel_separation / 2.0) / right_wheel_radius;
-}
 
-void diffdrive_command() {
-  
+  float* velocity_buffer = (float*) malloc(sizeof(float)*feedback_buffer_size);
+  for (int i = 0; i < drive->config.wheels_per_side; i++) {
+    velocity_buffer[i] = velocity_left;
+    velocity_buffer[drive->config.wheels_per_side+i] = velocity_right;
+  }
+  if (drive->velocity_callback(velocity_buffer, feedback_buffer_size, drive->config.wheels_per_side)) {
+    // ERROR: Something went wrong writing the velocities
+  }
+  free(velocity_buffer); // FIXME: replace with kfree
 }
 
 struct FloatRollingMeanAccumulator {

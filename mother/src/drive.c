@@ -1,6 +1,18 @@
 #include <math.h>
 #include <stdbool.h>
 
+struct DiffDriveOdometryConfig {
+  int timestamp;
+  float x,y,heading, wheel_separation, left_wheel_radius, right_wheel_radius;
+  int velocity_rolling_window_size;
+};
+struct DiffDriveOdometry {
+  const struct DiffDriveOdometryConfig config;
+  int timestamp;
+  float x, y, heading, left_wheel_old_pos, right_wheel_old_pos, linear, angular;
+  struct FloatRollingMeanAccumulator *linear_accumulator, *angular_accumulator;
+};
+int diffdrive_odometry_update_from_velocity(struct DiffDriveOdometry* odom, float left_vel, float right_vel, const int time);
 struct DiffDriveTwist {
   float linear_x;
   float angular_z;
@@ -69,8 +81,8 @@ void diffdrive_update(struct DiffDrive* drive, struct DiffDriveTwist command) {
   if (drive->config.update_type | POSITION_FEEDBACK) {
     // TODO: odometry update from position
   } else {
-    diffdrive_odometry_update_from_velocity(drive->odometry, left_feedback_mean * left_wheel_radius * 1, // FIXME period.seconds()
-                                            right_feedback_mean * right_wheel_radius * 1, // FIXME period.second()
+    diffdrive_odometry_update_from_velocity(drive->odometry, left_feedback_mean * left_wheel_radius * 1.0f, // FIXME period.seconds()
+                                            right_feedback_mean * right_wheel_radius * 1.0f, // FIXME period.second()
                                             now_timestamp);
   }
 
@@ -116,17 +128,6 @@ float float_rolling_mean_accumulator_get_rolling_mean(const struct FloatRollingM
   // CHECKME: assert(valid_data_count > 0);
   return frma->sum / valid_data_count;
 }
-struct DiffDriveOdometryConfig {
-  int timestamp;
-  float x,y,heading, wheel_separation, left_wheel_radius, right_wheel_radius;
-  int velocity_rolling_window_size;
-};
-struct DiffDriveOdometry {
-  const struct DiffDriveOdometryConfig config;
-  int timestamp;
-  float x, y, heading, left_wheel_old_pos, right_wheel_old_pos, linear, angular;
-  struct FloatRollingMeanAccumulator *linear_accumulator, *angular_accumulator;
-};
 void diffdrive_odometry_integrate_runge_kutta2(struct DiffDriveOdometry* odom, float linear, float angular)
 {
   const double direction = odom->heading + angular * 0.5;

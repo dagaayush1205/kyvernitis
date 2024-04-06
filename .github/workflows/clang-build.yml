@@ -58,6 +58,10 @@ jobs:
         working-directory: ${{github.workspace}}/..
         run: west build -p always -o=-j2 -b blackpill_f401cc kyvernitis/fpv-switch
 
+      - name: Build Mother application (Drive)
+        working-directory: ${{github.workspace}}/..
+        run: west build -p always -o=-j2 -b blackpill_f401cc kyvernitis/mother
+
       - name: Build tests/read_can
         working-directory: ${{github.workspace}}/..
         run: west build -p always -o=-j2 -b blackpill_f401cc kyvernitis/tests/read_can

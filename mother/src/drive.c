@@ -6,21 +6,26 @@
 #include <zephyr/logging/log.h>
 #include <app_version.h>
 #include <math.h>
+#include <string.h>
+
+
+LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
 struct DiffDriveOdometryConfig {
-	int timestamp;
+	int64_t timestamp;
 	float x, y, heading, wheel_separation, left_wheel_radius, right_wheel_radius;
 	int velocity_rolling_window_size;
 };
+
 struct DiffDriveOdometry {
 	const struct DiffDriveOdometryConfig config;
-	int timestamp;
+	int64_t timestamp;
 	float x, y, heading, left_wheel_old_pos, right_wheel_old_pos, linear, angular;
 	struct FloatRollingMeanAccumulator *linear_accumulator, *angular_accumulator;
 };
 
 int diffdrive_odometry_update_from_velocity(struct DiffDriveOdometry *odom, float left_vel,
-					    float right_vel, const int time);
+					    float right_vel, const int64_t time);
 
 struct DiffDriveTwist {
 	float linear_x;
@@ -78,7 +83,7 @@ void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command)
 	// First N elements => Left
 	// Next N elements =>  Right
 	float *feedback =
-		k_malloc(sizeof(float) * feedback_buffer_size); // FIXME: Replace with kmalloc
+		k_malloc(sizeof(float) * feedback_buffer_size);
 	if (drive->feedback_callback(feedback, feedback_buffer_size,
 				     drive->config.wheels_per_side)) {
 		// ERROR: Something went wrong while getting feedback
@@ -135,14 +140,15 @@ struct FloatRollingMeanAccumulator {
 
 void *float_rolling_mean_accumulator_init(int rolling_window_size)
 {
-	float *buffer = 0x00; // calloc(rolling_window_size, sizeof(float)); FIXME
+	float *buffer = k_calloc(rolling_window_size, sizeof(float)); 
 	struct FloatRollingMeanAccumulator frma = {.buffer = buffer,
 						   .buffer_len = rolling_window_size,
 						   .buffer_filled = false,
 						   .next_insert = 0,
 						   .sum = 0.0f};
-	void *heap_frma = 0x00; // FIXME: malloc(sizeof(frma));
-	// FIXME memcpy(heap_frma, frma);
+	void *heap_frma = k_malloc(sizeof(frma));
+	// FIXME memcpy(heap_frma, frma); AMB &frma
+	memcpy(heap_frma, &frma, sizeof(frma));
 	return heap_frma;
 }
 
@@ -197,7 +203,7 @@ void *diffdrive_odometry_init(struct DiffDriveOdometryConfig config)
 }
 
 int diffdrive_odometry_update_from_velocity(struct DiffDriveOdometry *odom, float left_vel,
-					    float right_vel, const int time)
+					    float right_vel, const int64_t time)
 {
 	const float dt = 0xDEADBEEF; // FIXME
 	const float linear = (left_vel + right_vel) * 0.5f;
@@ -215,7 +221,7 @@ int diffdrive_odometry_update_from_velocity(struct DiffDriveOdometry *odom, floa
 }
 
 int diffdrive_odometry_update(struct DiffDriveOdometry *odom, float left_pos, float right_pos,
-			      const int time)
+			      const int64_t time)
 {
 	// TODO: compute dt
 	const float dt = 0xDEADBEEF; // FIXME

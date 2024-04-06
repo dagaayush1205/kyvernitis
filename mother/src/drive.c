@@ -245,7 +245,10 @@ int diffdrive_odometry_update(struct DiffDriveOdometry *odom, float left_pos, fl
 
 void diffdrive_odometry_reset_accumulators(struct DiffDriveOdometry *odom)
 {
-	// FIXME: dealloc frma before reallocating
+	// FIXED: dealloc frma before reallocating
+	k_free(odom->linear_accumulator);
+	k_free(odom->angular_accumulator);
+
 	odom->linear_accumulator =
 		float_rolling_mean_accumulator_init(odom->config.velocity_rolling_window_size);
 	odom->angular_accumulator =

@@ -1,5 +1,11 @@
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/can.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <app_version.h>
 #include <math.h>
-#include <stdbool.h>
 
 struct DiffDriveOdometryConfig {
   int timestamp;
@@ -58,7 +64,7 @@ void diffdrive_update(struct DiffDrive* drive, struct DiffDriveTwist command) {
   const int feedback_buffer_size = drive->config.wheels_per_side*2;
   // First N elements => Left
   // Next N elements =>  Right
-  float* feedback = malloc(sizeof(float)*feedback_buffer_size); // FIXME: Replace with kmalloc
+  float* feedback = k_malloc(sizeof(float)*feedback_buffer_size); // FIXME: Replace with kmalloc
   if (drive->feedback_callback(
         feedback, feedback_buffer_size, drive->config.wheels_per_side)) {
     // ERROR: Something went wrong while getting feedback
@@ -74,7 +80,7 @@ void diffdrive_update(struct DiffDrive* drive, struct DiffDriveTwist command) {
     left_feedback_mean += left_feedback;
     right_feedback_mean += right_feedback;
   }
-  free(feedback); // FIXME: Replace with kfree
+  k_free(feedback);
   left_feedback_mean /= drive->config.wheels_per_side;
   right_feedback_mean /= drive->config.wheels_per_side;
 
@@ -89,7 +95,7 @@ void diffdrive_update(struct DiffDrive* drive, struct DiffDriveTwist command) {
   const float velocity_left = (linear_command - angular_command * wheel_separation / 2.0) / left_wheel_radius;
   const float velocity_right = (linear_command + angular_command * wheel_separation / 2.0) / right_wheel_radius;
 
-  float* velocity_buffer = (float*) malloc(sizeof(float)*feedback_buffer_size);
+  float* velocity_buffer = (float*) k_malloc(sizeof(float)*feedback_buffer_size);
   for (int i = 0; i < drive->config.wheels_per_side; i++) {
     velocity_buffer[i] = velocity_left;
     velocity_buffer[drive->config.wheels_per_side+i] = velocity_right;
@@ -97,7 +103,7 @@ void diffdrive_update(struct DiffDrive* drive, struct DiffDriveTwist command) {
   if (drive->velocity_callback(velocity_buffer, feedback_buffer_size, drive->config.wheels_per_side)) {
     // ERROR: Something went wrong writing the velocities
   }
-  free(velocity_buffer); // FIXME: replace with kfree
+  k_free(velocity_buffer);
 }
 
 struct FloatRollingMeanAccumulator {

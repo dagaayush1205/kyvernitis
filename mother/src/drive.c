@@ -208,7 +208,7 @@ void *diffdrive_odometry_init(struct DiffDriveOdometryConfig config)
 int diffdrive_odometry_update_from_velocity(struct DiffDriveOdometry *odom, float left_vel,
 					    float right_vel, const int64_t time)
 {
-	const float dt = 0xDEADBEEF; // FIXME
+	const float dt = time - odom->last_command_timestamp; // FIXED
 	const float linear = (left_vel + right_vel) * 0.5f;
 	const float angular = (right_vel - left_vel) / odom->config.wheel_separation;
 
@@ -226,8 +226,8 @@ int diffdrive_odometry_update_from_velocity(struct DiffDriveOdometry *odom, floa
 int diffdrive_odometry_update(struct DiffDriveOdometry *odom, float left_pos, float right_pos,
 			      const int64_t time)
 {
-	// TODO: compute dt
-	const float dt = 0xDEADBEEF; // FIXME
+	// DONE: compute dt
+	const float dt = time - odom->last_command_timestamp;
 	if (dt < 0.0001) {
 		return false;
 	}

@@ -50,7 +50,7 @@ struct DiffDriveConfig {
 
 struct DiffDrive {
 	const struct DiffDriveConfig config;
-	int previous_update_timestamp;
+	int64_t previous_update_timestamp;
 	const struct DiffDriveOdometryConfig odometry_config;
 	struct DiffDriveOdometry *odometry;
 	int (*feedback_callback)(float *feedback_buffer, int buffer_len, int wheels_per_side);

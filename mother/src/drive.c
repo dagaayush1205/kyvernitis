@@ -12,7 +12,6 @@
 LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
 struct DiffDriveOdometryConfig {
-	int64_t command_timeout_seconds;
 	float x, y, heading, wheel_separation, left_wheel_radius, right_wheel_radius;
 	int velocity_rolling_window_size;
 };
@@ -42,6 +41,7 @@ struct DiffDriveConfig {
 	int wheels_per_side; // actually 2, but both are controlled by 1 signal
 	float wheel_radius;
 
+	int64_t command_timeout_seconds;
 	float wheel_separation_multiplier;
 	float left_wheel_radius_multiplier;
 	float right_wheel_radius_multiplier;
@@ -213,7 +213,7 @@ int diffdrive_odometry_update_from_velocity(struct DiffDriveOdometry *odom, floa
 	const float angular = (right_vel - left_vel) / odom->config.wheel_separation;
 
 	diffdrive_odometry_integrate_exact(odom, linear, angular);
-	odom->timestamp = time;
+	odom->last_command_timestamp = time;
 
 	float_rolling_mean_accumulator_accumulate(odom->linear_accumulator, linear / dt);
 	float_rolling_mean_accumulator_accumulate(odom->angular_accumulator, angular / dt);

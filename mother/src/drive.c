@@ -12,14 +12,14 @@
 LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
 struct DiffDriveOdometryConfig {
-	int64_t timestamp;
+	int64_t command_timeout_seconds;
 	float x, y, heading, wheel_separation, left_wheel_radius, right_wheel_radius;
 	int velocity_rolling_window_size;
 };
 
 struct DiffDriveOdometry {
 	const struct DiffDriveOdometryConfig config;
-	int64_t timestamp;
+	int64_t last_command_timestamp;
 	float x, y, heading, left_wheel_old_pos, right_wheel_old_pos, linear, angular;
 	struct FloatRollingMeanAccumulator *linear_accumulator, *angular_accumulator;
 };
@@ -66,7 +66,10 @@ void *diffdrive_init(struct DiffDriveConfig *config)
 void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command)
 {
 	// Get time since last update
-	const int now_timestamp = 0xDEADBEEF; // TODO: Change this
+	if (k_uptime_delta(&drive->previous_update_timestamp) > drive->config.command_timeout_seconds*1000) {
+		command.linear_x = 0.0;
+		command.angular_z = 0.0;
+	}
 	const float wheel_separation =
 		drive->config.wheel_separation_multiplier * drive->config.wheel_separation;
 	const float left_wheel_radius =

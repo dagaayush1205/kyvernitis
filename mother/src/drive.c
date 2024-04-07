@@ -63,7 +63,7 @@ void *diffdrive_init(struct DiffDriveConfig *config)
 	return (void *)0xDEADBEEF;
 }
 
-void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command)
+void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command, int64_t time_taken_by_last_update_seconds)
 {
 	// Get time since last update
 	if (k_uptime_delta(&drive->previous_update_timestamp) > drive->config.command_timeout_seconds*1000) {
@@ -111,9 +111,9 @@ void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command)
 	} else {
 		diffdrive_odometry_update_from_velocity(
 			drive->odometry,
-			left_feedback_mean * left_wheel_radius * 1.0f,   // FIXME period.seconds()
-			right_feedback_mean * right_wheel_radius * 1.0f, // FIXME period.second()
-			now_timestamp);
+			left_feedback_mean * left_wheel_radius * time_taken_by_last_update_seconds,
+			right_feedback_mean * right_wheel_radius * time_taken_by_last_update_seconds,
+			drive->previous_update_timestamp);
 	}
 
 	const float velocity_left =

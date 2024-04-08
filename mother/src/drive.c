@@ -12,7 +12,7 @@
 LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
 struct DiffDriveOdometryConfig {
-	float x, y, heading, wheel_separation, left_wheel_radius, right_wheel_radius;
+	float wheel_separation, left_wheel_radius, right_wheel_radius;
 	int velocity_rolling_window_size;
 };
 

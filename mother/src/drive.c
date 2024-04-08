@@ -57,10 +57,28 @@ struct DiffDrive {
 	int (*velocity_callback)(const float *velocity_buffer, int buffer_len, int wheels_per_side);
 };
 
-void *diffdrive_init(struct DiffDriveConfig *config)
+void *float_rolling_mean_accumulator_init(int rolling_window_size);
+void *diffdrive_odometry_init(struct DiffDriveOdometryConfig config);
+void *diffdrive_init(struct DiffDriveConfig *config,
+		     int (*feedback_callback)(float *feedback_buffer, int buffer_len,
+					      int wheels_per_side),
+		     int (*velocity_callback)(const float *velocity_buffer, int buffer_len,
+					      int wheels_per_side))
 {
-	// TODO: Make a constructor here
-	return (void *)0xDEADBEEF;
+	struct DiffDriveOdometryConfig odom_config =  {
+		.wheel_separation = config->wheel_separation,
+		.left_wheel_radius = config->wheel_radius,
+		.right_wheel_radius = config->wheel_radius, .velocity_rolling_window_size = 10
+	};
+	void *odom = diffdrive_odometry_init(odom_config);
+	struct DiffDrive drive = {.previous_update_timestamp = 0,
+				  .odometry = odom,
+				  .feedback_callback = feedback_callback,
+				  .velocity_callback = velocity_callback};
+	struct DiffDrive *heap_drive = (struct DiffDrive *)k_malloc(sizeof(drive));
+	memcpy(heap_drive, &drive, sizeof(drive));
+	memcpy((void *)&heap_drive->config, config, sizeof(*config));
+	return (void *)heap_drive;
 }
 
 void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command, int64_t time_taken_by_last_update_seconds)
@@ -201,8 +219,17 @@ void diffdrive_odometry_integrate_exact(struct DiffDriveOdometry *odom, float li
 
 void *diffdrive_odometry_init(struct DiffDriveOdometryConfig config)
 {
-	// TODO: diffdrive_reset_accumulators();
-	return (void *)0xDEADBEEF;
+	struct FloatRollingMeanAccumulator* linear_frma = float_rolling_mean_accumulator_init(config.velocity_rolling_window_size);
+	struct FloatRollingMeanAccumulator* angular_frma = float_rolling_mean_accumulator_init(config.velocity_rolling_window_size);
+	struct DiffDriveOdometry odom = {
+		.last_command_timestamp = 0, .x = 0.0, .y = 0.0, .heading = 0.0,
+		.left_wheel_old_pos = 0.0, .right_wheel_old_pos = 0.0, .linear = 0.0, .angular = 0.0,
+		.linear_accumulator = linear_frma, .angular_accumulator = angular_frma
+	};
+	struct DiffDriveOdometry *heap_odom = (struct DiffDriveOdometry*) k_malloc(sizeof(odom));
+	memcpy(heap_odom, &odom, sizeof(odom));
+	memcpy((void*)&heap_odom->config, &config, sizeof(config));
+	return (void *)heap_odom;
 }
 
 int diffdrive_odometry_update_from_velocity(struct DiffDriveOdometry *odom, float left_vel,

@@ -1,0 +1,47 @@
+{
+  "nodes": {
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1712536827,
+        "narHash": "sha256-77lIj29W71siPQHF23rsvYNIpJQXrRE6E5jsXESdwco=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "7adda2c7505f6fb8abe2c234dea1adc051f8dec9",
+        "type": "github"
+      },
+      "original": {
+        "id": "nixpkgs",
+        "ref": "release-23.11",
+        "type": "indirect"
+      }
+    },
+    "root": {
+      "inputs": {
+        "nixpkgs": "nixpkgs",
+        "zephyr-rtos": "zephyr-rtos"
+      }
+    },
+    "zephyr-rtos": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1706942105,
+        "narHash": "sha256-LFkxbZ6zyFlCY4HfvCmk3A7Cg6tgJrxTUHQpZ2kUHfc=",
+        "owner": "katyo",
+        "repo": "zephyr-rtos.nix",
+        "rev": "2968fcaedbb8fbb0de752ea9bed0c1baebb1698d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "katyo",
+        "repo": "zephyr-rtos.nix",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

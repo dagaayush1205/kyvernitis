@@ -1,0 +1,204 @@
+/ {
+	pwmmotors {
+		compatible = "pwm-motors";
+		pwm_motor_1: pwm_1 {
+			pwms  = <&pwm1 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_2: pwm_2 {
+			pwms  = <&pwm1 2 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_3: pwm_3 {
+			pwms  = <&pwm1 3 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_4: pwm_4 {
+			pwms  = <&pwm2 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_5: pwm_5 {
+			pwms  = <&pwm2 2 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_6: pwm_6 {
+			pwms  = <&pwm2 4 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_7: pwm_7 {
+			pwms  = <&pwm3 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_8: pwm_8 {
+			pwms  = <&pwm3 2 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_9: pwm_9 {
+			pwms  = <&pwm3 4 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_10: pwm_10 {
+			pwms  = <&pwm4 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_11: pwm_11 {
+			pwms  = <&pwm4 2 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_12: pwm_12 {
+			pwms  = <&pwm4 3 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_13: pwm_13 {
+			pwms  = <&pwm4 4 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_14: pwm_14 {
+			pwms  = <&pwm8 2 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_15: pwm_15 {
+			pwms  = <&pwm8 3 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_16: pwm_16 {
+			pwms  = <&pwm8 4 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_17: pwm_17 {
+			pwms  = <&pwm10 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_18: pwm_18 {
+			pwms  = <&pwm11 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_19: pwm_19 {
+			pwms  = <&pwm12 2 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+		pwm_motor_20: pwm_20 {
+			pwms  = <&pwm13 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1120)>;
+			max-pulse = <PWM_USEC(1920)>;
+		};
+	};
+};
+
+&timers1 {
+	status = "okay";
+	st,prescaler = <1679>;
+
+	pwm1: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim1_ch1_pe9 &tim1_ch2_pe11 &tim1_ch3_pe13>;
+		pinctrl-names = "default";
+	};
+};
+
+&timers2 {
+	status = "okay";
+	st,prescaler = <1679>;
+
+	pwm2: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim2_ch1_pa5 &tim2_ch2_pa1 &tim2_ch4_pb11>;
+		pinctrl-names = "default";
+	};
+};
+
+&timers3 {
+	status = "okay";
+	st,prescaler = <1679>;
+
+	pwm3: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim3_ch1_pc6 &tim3_ch2_pa7 &tim3_ch4_pb1>;
+		pinctrl-names = "default";
+	};
+};
+
+&timers4 {
+	status = "okay";
+	st,prescaler = <1679>;
+
+	pwm4: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim4_ch1_pd12 &tim4_ch2_pd13 &tim4_ch3_pd14 &tim4_ch4_pd15>;
+		pinctrl-names = "default";
+	};
+};
+
+&timers8 {
+	status = "okay";
+	st,prescaler = <1679>;
+
+	pwm8: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim8_ch2_pc7 &tim8_ch3_pc8 &tim8_ch4_pc9>;
+		pinctrl-names = "default";
+	};
+};
+
+&timers10 {
+	status = "okay";
+	st,prescaler = <1679>;
+
+	pwm10: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim10_ch1_pb8>;
+		pinctrl-names = "default";
+	};
+};
+
+&timers11 {
+	status = "okay";
+	st,prescaler = <1679>;
+
+	pwm11: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim11_ch1_pb9>;
+		pinctrl-names = "default";
+	};
+};
+
+&timers12 {
+	status = "okay";
+	st,prescaler = <1679>;
+
+	pwm12: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim12_ch2_pb15>;
+		pinctrl-names = "default";
+	};
+};
+
+&timers13 {
+	status = "okay";
+	st,prescaler = <1679>;
+
+	pwm13: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim13_ch1_pa6>;
+		pinctrl-names = "default";
+	};
+};

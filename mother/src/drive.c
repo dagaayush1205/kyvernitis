@@ -74,8 +74,8 @@ void *diffdrive_init(struct DiffDriveConfig *config,
 				  .feedback_callback = feedback_callback,
 				  .velocity_callback = velocity_callback};
 	struct DiffDrive *heap_drive = (struct DiffDrive *)k_malloc(sizeof(drive));
-	memcpy(heap_drive, &drive, sizeof(drive));
-	memcpy((void *)&heap_drive->config, config, sizeof(*config));
+	memcpy(heap_drive, &drive, sizeof(*heap_drive));
+	memcpy((void *)&heap_drive->config, config, sizeof(heap_drive->config));
 	return (void *)heap_drive;
 }
 
@@ -167,8 +167,8 @@ void *float_rolling_mean_accumulator_init(int rolling_window_size)
 						   .buffer_filled = false,
 						   .next_insert = 0,
 						   .sum = 0.0f};
-	void *heap_frma = k_malloc(sizeof(frma));
-	memcpy(heap_frma, &frma, sizeof(frma));
+	struct FloatRollingMeanAccumulator *heap_frma = k_malloc(sizeof(frma));
+	memcpy(heap_frma, &frma, sizeof(*heap_frma));
 	return heap_frma;
 }
 
@@ -233,8 +233,8 @@ void *diffdrive_odometry_init(struct DiffDriveOdometryConfig config)
 					 .linear_accumulator = linear_frma,
 					 .angular_accumulator = angular_frma};
 	struct DiffDriveOdometry *heap_odom = (struct DiffDriveOdometry *)k_malloc(sizeof(odom));
-	memcpy(heap_odom, &odom, sizeof(odom));
-	memcpy((void *)&heap_odom->config, &config, sizeof(config));
+	memcpy(heap_odom, &odom, sizeof(*heap_odom));
+	memcpy((void *)&heap_odom->config, &config, sizeof(heap_odom->config));
 	return (void *)heap_odom;
 }
 

@@ -168,7 +168,6 @@ void *float_rolling_mean_accumulator_init(int rolling_window_size)
 						   .next_insert = 0,
 						   .sum = 0.0f};
 	void *heap_frma = k_malloc(sizeof(frma));
-	// FIXME memcpy(heap_frma, frma); AMB &frma
 	memcpy(heap_frma, &frma, sizeof(frma));
 	return heap_frma;
 }
@@ -235,7 +234,7 @@ void *diffdrive_odometry_init(struct DiffDriveOdometryConfig config)
 int diffdrive_odometry_update_from_velocity(struct DiffDriveOdometry *odom, float left_vel,
 					    float right_vel, const int64_t time)
 {
-	const float dt = time - odom->last_command_timestamp; // FIXED
+	const float dt = time - odom->last_command_timestamp;
 	const float linear = (left_vel + right_vel) * 0.5f;
 	const float angular = (right_vel - left_vel) / odom->config.wheel_separation;
 
@@ -253,7 +252,6 @@ int diffdrive_odometry_update_from_velocity(struct DiffDriveOdometry *odom, floa
 int diffdrive_odometry_update(struct DiffDriveOdometry *odom, float left_pos, float right_pos,
 			      const int64_t time)
 {
-	// DONE: compute dt
 	const float dt = time - odom->last_command_timestamp;
 	if (dt < 0.0001) {
 		return false;
@@ -275,7 +273,6 @@ int diffdrive_odometry_update(struct DiffDriveOdometry *odom, float left_pos, fl
 
 void diffdrive_odometry_reset_accumulators(struct DiffDriveOdometry *odom)
 {
-	// FIXED: dealloc frma before reallocating
 	k_free(odom->linear_accumulator);
 	k_free(odom->angular_accumulator);
 

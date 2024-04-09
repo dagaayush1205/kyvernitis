@@ -10,109 +10,11 @@
 
 #include <kyvernitis.h>
 
-
-struct pwm_motor roboclaw[20] = {
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_1)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_1), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_1), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_2)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_2), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_2), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_3)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_3), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_3), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_4)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_4), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_4), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_5)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_5), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_5), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_6)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_6), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_6), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_7)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_7), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_7), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_8)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_8), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_8), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_9)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_9), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_9), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_10)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_10), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_10), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_11)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_11), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_11), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_12)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_12), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_12), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_13)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_13), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_13), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_14)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_14), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_14), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_15)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_15), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_15), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_16)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_16), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_16), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_17)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_17), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_17), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_18)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_18), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_18), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_19)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_19), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_19), max_pulse)
-	},
-	{
-		.dev_spec = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_motor_20)),
-		.min_pulse = DT_PROP(DT_NODELABEL(pwm_motor_20), min_pulse),
-		.max_pulse = DT_PROP(DT_NODELABEL(pwm_motor_20), max_pulse)
-	},
-};
+#define PWM_MOTOR_SETUP(pwm_dev_id)                                                                \
+	{.dev_spec = PWM_DT_SPEC_GET(pwm_dev_id),                                                  \
+	 .min_pulse = DT_PROP(pwm_dev_id, min_pulse),                                              \
+	 .max_pulse = DT_PROP(pwm_dev_id, max_pulse)},
+struct pwm_motor roboclaw[20] = {DT_FOREACH_CHILD(DT_PATH(pwmmotors), PWM_MOTOR_SETUP)};
 
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
 

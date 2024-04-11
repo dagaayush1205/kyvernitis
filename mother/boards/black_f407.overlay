@@ -106,7 +106,7 @@
 
 &timers1 {
 	status = "okay";
-	st,prescaler = <1679>;
+	st,prescaler = <3359>;
 
 	pwm1: pwm {
 		status = "okay";
@@ -117,7 +117,7 @@
 
 &timers2 {
 	status = "okay";
-	st,prescaler = <1679>;
+	st,prescaler = <3359>;
 
 	pwm2: pwm {
 		status = "okay";
@@ -128,7 +128,7 @@
 
 &timers3 {
 	status = "okay";
-	st,prescaler = <1679>;
+	st,prescaler = <3359>;
 
 	pwm3: pwm {
 		status = "okay";
@@ -139,7 +139,7 @@
 
 &timers4 {
 	status = "okay";
-	st,prescaler = <1679>;
+	st,prescaler = <3359>;
 
 	pwm4: pwm {
 		status = "okay";
@@ -150,7 +150,7 @@
 
 &timers8 {
 	status = "okay";
-	st,prescaler = <1679>;
+	st,prescaler = <3359>;
 
 	pwm8: pwm {
 		status = "okay";
@@ -161,7 +161,7 @@
 
 &timers10 {
 	status = "okay";
-	st,prescaler = <1679>;
+	st,prescaler = <3359>;
 
 	pwm10: pwm {
 		status = "okay";
@@ -172,7 +172,7 @@
 
 &timers11 {
 	status = "okay";
-	st,prescaler = <1679>;
+	st,prescaler = <3359>;
 
 	pwm11: pwm {
 		status = "okay";
@@ -183,7 +183,7 @@
 
 &timers12 {
 	status = "okay";
-	st,prescaler = <1679>;
+	st,prescaler = <3359>;
 
 	pwm12: pwm {
 		status = "okay";
@@ -194,7 +194,7 @@
 
 &timers13 {
 	status = "okay";
-	st,prescaler = <1679>;
+	st,prescaler = <3359>;
 
 	pwm13: pwm {
 		status = "okay";

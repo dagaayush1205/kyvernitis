@@ -39,6 +39,10 @@ struct dc_motor {
 	const struct gpio_dt_spec input_2;
 };
 
+struct mother_msg {
+	uint8_t type;
+};
+
 typedef uint32_t servo_state_t;
 
 // Wrapper around pwm_set_pulse_dt to ensure that pulse_width

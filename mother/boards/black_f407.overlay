@@ -102,6 +102,10 @@
 			max-pulse = <PWM_USEC(1920)>;
 		};
 	};
+
+	aliases {
+		mother-uart = &usart2;
+	};
 };
 
 &timers1 {

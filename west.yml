@@ -16,5 +16,11 @@ manifest:
       revision: master 
       path: modules/lib/canard
 
+    - name: CANscribe 
+      url: https://github.com/waseemr02/canscribe
+      revision: main 
+      path: modules/lib/canscribe
+
+
   self:
     path: kyvernitis

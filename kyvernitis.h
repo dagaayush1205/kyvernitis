@@ -41,6 +41,7 @@ struct dc_motor {
 
 struct mother_msg {
 	uint8_t type;
+	uint32_t crc;
 };
 
 typedef uint32_t servo_state_t;

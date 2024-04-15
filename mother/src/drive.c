@@ -1,14 +1,8 @@
-#include <zephyr/device.h>
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/can.h>
-#include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
-#include <app_version.h>
+#include "drive.h"
+#include <stdlib.h>
+#include <stdbool.h>
 #include <math.h>
 #include <string.h>
-
-LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
 struct DiffDriveOdometryConfig {
 	float wheel_separation, left_wheel_radius, right_wheel_radius;
@@ -25,28 +19,6 @@ struct DiffDriveOdometry {
 int diffdrive_odometry_update_from_velocity(struct DiffDriveOdometry *odom, float left_vel,
 					    float right_vel, const int64_t time);
 
-struct DiffDriveTwist {
-	float linear_x;
-	float angular_z;
-};
-
-enum DiffDriveUpdateType {
-	POSITION_FEEDBACK,
-	VELOCITY_FEEDBACK
-};
-
-struct DiffDriveConfig {
-	float wheel_separation;
-	int wheels_per_side; // actually 2, but both are controlled by 1 signal
-	float wheel_radius;
-
-	int64_t command_timeout_seconds;
-	float wheel_separation_multiplier;
-	float left_wheel_radius_multiplier;
-	float right_wheel_radius_multiplier;
-	int update_type;
-};
-
 struct DiffDrive {
 	const struct DiffDriveConfig config;
 	int64_t previous_update_timestamp;
@@ -56,9 +28,9 @@ struct DiffDrive {
 	int (*velocity_callback)(const float *velocity_buffer, int buffer_len, int wheels_per_side);
 };
 
-void *float_rolling_mean_accumulator_init(int rolling_window_size);
-void *diffdrive_odometry_init(struct DiffDriveOdometryConfig config);
-void *diffdrive_init(struct DiffDriveConfig *config,
+struct FloatRollingMeanAccumulator* float_rolling_mean_accumulator_init(int rolling_window_size);
+struct DiffDriveOdometry* diffdrive_odometry_init(struct DiffDriveOdometryConfig config);
+struct DiffDrive *diffdrive_init(struct DiffDriveConfig *config,
 		     int (*feedback_callback)(float *feedback_buffer, int buffer_len,
 					      int wheels_per_side),
 		     int (*velocity_callback)(const float *velocity_buffer, int buffer_len,
@@ -68,12 +40,12 @@ void *diffdrive_init(struct DiffDriveConfig *config,
 						      .left_wheel_radius = config->wheel_radius,
 						      .right_wheel_radius = config->wheel_radius,
 						      .velocity_rolling_window_size = 10};
-	void *odom = diffdrive_odometry_init(odom_config);
+	struct DiffDriveOdometry* odom = diffdrive_odometry_init(odom_config);
 	struct DiffDrive drive = {.previous_update_timestamp = 0,
 				  .odometry = odom,
 				  .feedback_callback = feedback_callback,
 				  .velocity_callback = velocity_callback};
-	struct DiffDrive *heap_drive = (struct DiffDrive *)k_malloc(sizeof(drive));
+	struct DiffDrive *heap_drive = (struct DiffDrive *)malloc(sizeof(drive));
 	memcpy(heap_drive, &drive, sizeof(*heap_drive));
 	memcpy((void *)&heap_drive->config, config, sizeof(heap_drive->config));
 	return (void *)heap_drive;
@@ -103,7 +75,7 @@ void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
 	const int feedback_buffer_size = drive->config.wheels_per_side * 2;
 	// First N elements => Left
 	// Next N elements =>  Right
-	float *feedback = k_malloc(sizeof(float) * feedback_buffer_size);
+	float *feedback = malloc(sizeof(float) * feedback_buffer_size);
 	if (drive->feedback_callback(feedback, feedback_buffer_size,
 				     drive->config.wheels_per_side)) {
 		// ERROR: Something went wrong while getting feedback
@@ -119,7 +91,7 @@ void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
 		left_feedback_mean += left_feedback;
 		right_feedback_mean += right_feedback;
 	}
-	k_free(feedback);
+	free(feedback);
 	left_feedback_mean /= drive->config.wheels_per_side;
 	right_feedback_mean /= drive->config.wheels_per_side;
 
@@ -139,7 +111,7 @@ void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
 	const float velocity_right =
 		(linear_command + angular_command * wheel_separation / 2.0) / right_wheel_radius;
 
-	float *velocity_buffer = (float *)k_malloc(sizeof(float) * feedback_buffer_size);
+	float *velocity_buffer = (float *)malloc(sizeof(float) * feedback_buffer_size);
 	for (int i = 0; i < drive->config.wheels_per_side; i++) {
 		velocity_buffer[i] = velocity_left;
 		velocity_buffer[drive->config.wheels_per_side + i] = velocity_right;
@@ -148,7 +120,7 @@ void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
 				     drive->config.wheels_per_side)) {
 		// ERROR: Something went wrong writing the velocities
 	}
-	k_free(velocity_buffer);
+	free(velocity_buffer);
 }
 
 struct FloatRollingMeanAccumulator {
@@ -159,15 +131,15 @@ struct FloatRollingMeanAccumulator {
 	int buffer_filled;
 };
 
-void *float_rolling_mean_accumulator_init(int rolling_window_size)
+struct FloatRollingMeanAccumulator* float_rolling_mean_accumulator_init(int rolling_window_size)
 {
-	float *buffer = k_calloc(rolling_window_size, sizeof(float));
+	float *buffer = calloc(rolling_window_size, sizeof(float));
 	struct FloatRollingMeanAccumulator frma = {.buffer = buffer,
 						   .buffer_len = rolling_window_size,
 						   .buffer_filled = false,
 						   .next_insert = 0,
 						   .sum = 0.0f};
-	struct FloatRollingMeanAccumulator *heap_frma = k_malloc(sizeof(frma));
+	struct FloatRollingMeanAccumulator *heap_frma = malloc(sizeof(frma));
 	memcpy(heap_frma, &frma, sizeof(*heap_frma));
 	return heap_frma;
 }
@@ -216,7 +188,7 @@ void diffdrive_odometry_integrate_exact(struct DiffDriveOdometry *odom, float li
 	}
 }
 
-void *diffdrive_odometry_init(struct DiffDriveOdometryConfig config)
+struct DiffDriveOdometry* diffdrive_odometry_init(struct DiffDriveOdometryConfig config)
 {
 	struct FloatRollingMeanAccumulator *linear_frma =
 		float_rolling_mean_accumulator_init(config.velocity_rolling_window_size);
@@ -232,7 +204,7 @@ void *diffdrive_odometry_init(struct DiffDriveOdometryConfig config)
 					 .angular = 0.0,
 					 .linear_accumulator = linear_frma,
 					 .angular_accumulator = angular_frma};
-	struct DiffDriveOdometry *heap_odom = (struct DiffDriveOdometry *)k_malloc(sizeof(odom));
+	struct DiffDriveOdometry *heap_odom = (struct DiffDriveOdometry *)malloc(sizeof(odom));
 	memcpy(heap_odom, &odom, sizeof(*heap_odom));
 	memcpy((void *)&heap_odom->config, &config, sizeof(heap_odom->config));
 	return (void *)heap_odom;
@@ -280,16 +252,11 @@ int diffdrive_odometry_update(struct DiffDriveOdometry *odom, float left_pos, fl
 
 void diffdrive_odometry_reset_accumulators(struct DiffDriveOdometry *odom)
 {
-	k_free(odom->linear_accumulator);
-	k_free(odom->angular_accumulator);
+	free(odom->linear_accumulator);
+	free(odom->angular_accumulator);
 
 	odom->linear_accumulator =
 		float_rolling_mean_accumulator_init(odom->config.velocity_rolling_window_size);
 	odom->angular_accumulator =
 		float_rolling_mean_accumulator_init(odom->config.velocity_rolling_window_size);
-}
-
-int main()
-{
-	printk("\nMother: v%s\n\n", APP_VERSION_STRING);
 }

@@ -3,4 +3,4 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
 project(kyvernitis LANGUAGES C)
 
-target_sources(app PRIVATE src/drive.c src/test_software.c)
+target_sources(app PRIVATE  src/main.c)

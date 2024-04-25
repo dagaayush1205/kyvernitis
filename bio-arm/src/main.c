@@ -17,7 +17,7 @@
 #include <app_version.h>
 
 #include <kycan.h>
-#include <kyvernitis.h>
+#include <kyvernitis/lib/kyvernitis.h>
 
 #define ROBOCLAWS_COUNT 2
 #define SERVOS_COUNT 2

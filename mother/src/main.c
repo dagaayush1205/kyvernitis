@@ -12,18 +12,18 @@
 #include <app_version.h>
 #include <math.h>
 #include <string.h>
-#include <canscribe.h>
-#include <kyvernitis.h>
+#include <canscribe/lib/canscribe.h>
+#include <kyvernitis/lib/kyvernitis.h>
 
 LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
 /* msg size in relation to cobs serialization */
-#define UART_MSG_SIZE        (sizeof(struct mother_msg) + 2)
+#define UART_MSG_SIZE        (sizeof(struct mother_cmd_msg) + 2)
 #define TX_THREAD_STACK_SIZE 512
 #define TX_THREAD_PRIORITY   2
 
 /* queue to store uart messages */
-K_MSGQ_DEFINE(uart_msgq, sizeof(struct mother_msg), 10, 1);
+K_MSGQ_DEFINE(uart_msgq, sizeof(struct mother_cmd_msg), 10, 1);
 
 /* Define stack size for uart to can thread */
 K_THREAD_STACK_DEFINE(uart_can_thread_stack, TX_THREAD_STACK_SIZE);
@@ -52,7 +52,7 @@ void serial_cb(const struct device *dev, void *user_data)
 
 	/* read until FIFO empty */
 	while (uart_fifo_read(uart_dev, &c, 1) == 1) {
-		struct mother_msg msg;
+		struct mother_cmd_msg msg;
 
 		if (c == 0 && rx_buf_pos > 0) {
 			// uart_fifo_read(uart_dev, &c, 1);
@@ -87,11 +87,11 @@ void send_to_uart(uint8_t *buf, uint8_t len)
 /*
  * Validates against crc
  */
-bool valid_crc(struct mother_msg *msg)
+bool valid_crc(struct mother_cmd_msg *msg)
 {
 	uint32_t rcd_crc = msg->crc;
 	uint32_t comp_crc =
-		crc32_ieee((uint8_t *)&msg, sizeof(struct mother_msg) - sizeof(uint32_t));
+		crc32_ieee((uint8_t *)&msg, sizeof(struct mother_cmd_msg) - sizeof(uint32_t));
 
 	if (rcd_crc != comp_crc) {
 		return false;
@@ -114,14 +114,14 @@ void uart_can_thread(void *unused1, void *unused2, void *unused3)
 
 	int err;
 	ARG_UNUSED(err);
-	struct mother_msg tx_msg;
+	struct mother_cmd_msg tx_msg;
 
 	while (1) {
 		/* Some data to send over uart */
 
 		tx_msg.crc = crc32_ieee((uint8_t *)&tx_msg, sizeof(struct can_frame));
 
-		serialize(tx_buf, (uint8_t *)&tx_msg, sizeof(struct mother_msg));
+		serialize(tx_buf, (uint8_t *)&tx_msg, sizeof(struct mother_cmd_msg));
 
 		send_to_uart(tx_buf, UART_MSG_SIZE);
 	}
@@ -168,7 +168,7 @@ int main()
 
 	LOG_INF("Initialization completed successfully");
 
-	struct mother_msg msg;
+	struct mother_cmd_msg msg;
 
 	while (true) {
 		if (k_msgq_get(&uart_msgq, &msg, K_FOREVER)) {

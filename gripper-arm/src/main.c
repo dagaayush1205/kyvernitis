@@ -13,7 +13,7 @@
 #include <app_version.h>
 
 #include <kycan.h>
-#include <kyvernitis.h>
+#include <kyvernitis/lib/kyvernitis.h>
 
 #define ROBOCLAWS_COUNT 2
 #define STEPPER_MOTOR_COUNT 2

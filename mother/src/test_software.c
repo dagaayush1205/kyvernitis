@@ -26,14 +26,16 @@ int velocity_callback(const float *velocity_buffer, int buffer_len, int wheels_p
 int main(void)
 {
 	printf("Starting software drive test...\n");
-	struct DiffDriveConfig drive_config = {.wheel_radius = 0.3f,
+	struct DiffDriveConfig drive_config = {.wheel_separation = 1,
+					       .wheel_separation_multiplier = 1,
+					       .wheel_radius = 0.15f,
 					       .wheels_per_side = 2,
-					       .left_wheel_radius_multiplier = 0.2f,
-					       .right_wheel_radius_multiplier = 0.2f,
-					       .update_type = VELOCITY_FEEDBACK};
+					       .left_wheel_radius_multiplier = 1,
+					       .right_wheel_radius_multiplier = 1,
+					       .update_type = POSITION_FEEDBACK};
 	struct DiffDrive* drive = diffdrive_init(&drive_config, feedback_callback, velocity_callback);
 	for (int i = 0; i < 10; i++) {
-	  struct DiffDriveTwist cmd = {.linear_x = 1.0f, .angular_z = 0.0f};
+	  struct DiffDriveTwist cmd = {.linear_x = i, .angular_z = -0.5f};
 	  diffdrive_update(drive, cmd, 2);
 	}
 }

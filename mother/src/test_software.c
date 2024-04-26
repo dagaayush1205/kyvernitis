@@ -17,8 +17,8 @@ int velocity_callback(const float *velocity_buffer, int buffer_len, int wheels_p
   if (buffer_len < wheels_per_side*2) return 1;
 	printf("====WHEEL SPEEDS====\n");
 	for (int i = 0; i < wheels_per_side; i++) {
-		printf("left: %.2f right: %.2f\n", velocity_buffer + i,
-		       velocity_buffer + wheels_per_side + i);
+		printf("left: %.2f right: %.2f\n", *(velocity_buffer + i),
+		       *(velocity_buffer + wheels_per_side + i));
 	}
 	printf("====================\n");
 	return 0;

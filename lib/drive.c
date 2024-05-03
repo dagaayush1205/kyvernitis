@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include <string.h>
+#include <assert.h>
 
 struct DiffDriveOdometryConfig {
 	float wheel_separation, left_wheel_radius, right_wheel_radius;
@@ -87,6 +88,7 @@ void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
 	if (drive->feedback_callback(feedback, feedback_buffer_size,
 				     drive->config.wheels_per_side)) {
 		// ERROR: Something went wrong while getting feedback
+		assert(false);
 	}
 	for (int i = 0; i < drive->config.wheels_per_side; i++) {
 		const float left_feedback = feedback[i];
@@ -94,6 +96,7 @@ void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
 
 		if (isnan(left_feedback) || isnan(right_feedback)) {
 			// ERROR: One of the wheels gives invalid feedback
+		assert(false);
 		}
 
 		left_feedback_mean += left_feedback;
@@ -103,8 +106,8 @@ void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
 	left_feedback_mean /= drive->config.wheels_per_side;
 	right_feedback_mean /= drive->config.wheels_per_side;
 
-	if (drive->config.update_type | POSITION_FEEDBACK) {
-		// TODO: odometry update from position
+	if (drive->config.update_type == POSITION_FEEDBACK) {
+		diffdrive_odometry_update(drive->odometry, left_feedback_mean, right_feedback_mean, drive->previous_update_timestamp);
 	} else {
 		diffdrive_odometry_update_from_velocity(drive->odometry,
 							left_feedback_mean * left_wheel_radius *
@@ -127,6 +130,7 @@ void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
 	if (drive->velocity_callback(velocity_buffer, feedback_buffer_size,
 				     drive->config.wheels_per_side)) {
 		// ERROR: Something went wrong writing the velocities
+		assert(false);
 	}
 	free(velocity_buffer);
 }

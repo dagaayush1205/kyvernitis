@@ -17,6 +17,8 @@ struct DiffDriveOdometry {
 	struct FloatRollingMeanAccumulator *linear_accumulator, *angular_accumulator;
 };
 
+int diffdrive_odometry_update(struct DiffDriveOdometry *odom, float left_pos, float right_pos,
+			      const int64_t time);
 int diffdrive_odometry_update_from_velocity(struct DiffDriveOdometry *odom, float left_vel,
 					    float right_vel, const int64_t time);
 

@@ -7,6 +7,9 @@
 #include <app_version.h>
 #include <stdint.h>
 
+struct DiffDriveStatus {
+	float x, y, heading, linear, angular;
+};
 struct DiffDriveTwist {
 	float linear_x;
 	float angular_z;
@@ -37,3 +40,4 @@ struct DiffDrive *diffdrive_init(struct DiffDriveConfig *config,
 					      int wheels_per_side));
 void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
 		      int64_t time_taken_by_last_update_seconds);
+struct DiffDriveStatus diffdrive_status(struct DiffDrive *drive);

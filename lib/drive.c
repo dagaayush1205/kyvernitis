@@ -66,8 +66,8 @@ void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
 		      int64_t time_taken_by_last_update_seconds)
 {
 	// Get time since last update
-	if (k_uptime_delta(&drive->previous_update_timestamp) >
-	    drive->config.command_timeout_seconds * 1000) {
+	if (k_uptime_delta(&drive->previous_update_timestamp) / 1000 >
+	    drive->config.command_timeout_seconds) {
 		command.linear_x = 0.0;
 		command.angular_z = 0.0;
 	}
@@ -227,7 +227,7 @@ struct DiffDriveOdometry* diffdrive_odometry_init(struct DiffDriveOdometryConfig
 int diffdrive_odometry_update_from_velocity(struct DiffDriveOdometry *odom, float left_vel,
 					    float right_vel, const int64_t time)
 {
-	const float dt = time - odom->last_command_timestamp;
+	const float dt = (time - odom->last_command_timestamp)/1000;
 	const float linear = (left_vel + right_vel) * 0.5f;
 	const float angular = (right_vel - left_vel) / odom->config.wheel_separation;
 
@@ -245,7 +245,7 @@ int diffdrive_odometry_update_from_velocity(struct DiffDriveOdometry *odom, floa
 int diffdrive_odometry_update(struct DiffDriveOdometry *odom, float left_pos, float right_pos,
 			      const int64_t time)
 {
-	const float dt = time - odom->last_command_timestamp;
+	const float dt = (time - odom->last_command_timestamp)/1000;
 	if (dt < 0.0001) {
 		return false;
 	}
@@ -273,4 +273,21 @@ void diffdrive_odometry_reset_accumulators(struct DiffDriveOdometry *odom)
 		float_rolling_mean_accumulator_init(odom->config.velocity_rolling_window_size);
 	odom->angular_accumulator =
 		float_rolling_mean_accumulator_init(odom->config.velocity_rolling_window_size);
+}
+
+/* Velocity to pwm  */
+int velocity_to_pwm(float velocity, float limit) {
+	if(velocity > limit) {
+		return limit;
+	}
+	
+	if(velocity < (-1)*limit) {
+		return (-1)*limit;
+	}
+	
+	if(abs((int)velocity*100) == 0){
+		return 1500000;
+	}
+
+	return 1500000;	
 }

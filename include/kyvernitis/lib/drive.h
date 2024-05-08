@@ -41,3 +41,5 @@ struct DiffDrive *diffdrive_init(struct DiffDriveConfig *config,
 void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
 		      int64_t time_taken_by_last_update_seconds);
 struct DiffDriveStatus diffdrive_status(struct DiffDrive *drive);
+
+int velocity_to_pwm(float velocity, float limit);

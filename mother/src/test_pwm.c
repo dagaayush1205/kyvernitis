@@ -8,7 +8,7 @@
 #include <zephyr/drivers/pwm.h>
 #include <zephyr/kernel.h>
 
-#include <kyvernitis.h>
+#include <kyvernitis/lib/kyvernitis.h>
 
 #define PWM_MOTOR_SETUP(pwm_dev_id)                                                                \
 	{.dev_spec = PWM_DT_SPEC_GET(pwm_dev_id),                                                  \
@@ -42,7 +42,7 @@ int main()
 	printk("Successfully initialized\n");
 
 	for(size_t i = 0U; i < ARRAY_SIZE(roboclaw); i++) {
-		for(uint32_t pulse = 1120000; pulse < 1192000; pulse += 100000)
+		for(uint32_t pulse = 1120000; pulse < 1920000; pulse += 100000)
 		{
 			if(pwm_motor_write(&roboclaw[i], pulse)) {
 				printk("Unable to write pwm pulse to PWM Motor : %d", i);

@@ -79,7 +79,8 @@ void serial_cb(const struct device *dev, void *user_data)
 			/* terminate the message with 0x00 */
 			rx_buf[rx_buf_pos] = 0;
 			
-			if (rx_buf_pos != (sizeof(struct mother_msg) - 1)) {
+			if (rx_buf_pos != (sizeof(struct mother_msg) + 2 - 1)) {
+				rx_buf_pos = 0;
 				continue;
 			}
 			// Add deserialization guard
@@ -92,6 +93,11 @@ void serial_cb(const struct device *dev, void *user_data)
 			rx_buf_pos = 0;
 		} else if (rx_buf_pos < (sizeof(rx_buf) - 1)) {
 			rx_buf[rx_buf_pos++] = c;
+		}
+		
+		if(rx_buf_pos > sizeof(struct mother_msg) + 2) {
+			rx_buf_pos = 0;
+			continue;
 		}
 		/* else: characters beyond buffer size are dropped */
 	}
@@ -271,7 +277,7 @@ int main()
 
 
 		switch (msg.type) {
-		case T_MOTHER_CMD_LA:
+		case T_MOTHER_CMD_DRIVE:
 			drive_timestamp = k_uptime_get();
 			diffdrive_update(drive, msg.cmd.drive_cmd, time_last_drive_update);
 			time_last_drive_update = k_uptime_get() - drive_timestamp; 

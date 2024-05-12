@@ -47,25 +47,21 @@ struct dc_motor {
 	const struct gpio_dt_spec input_2;
 };
 
-union mother_cmd_msg {
+struct mother_cmd_msg {
 	struct DiffDriveTwist drive_cmd;
 	uint8_t arm_joint[5];
 	uint8_t adaptive_sus_cmd[4];
 };
 
 struct mother_status_msg {
-	uint16_t type;
 	struct DiffDriveStatus odom;
 	uint64_t timestamp;
-	uint32_t crc;
 };
 
 struct mother_msg {
 	uint16_t type;
-	union {
-		struct mother_status_msg status;
-		union mother_cmd_msg cmd;
-	};
+	struct mother_status_msg status;
+	struct mother_cmd_msg cmd;
 	uint32_t crc;
 };
 

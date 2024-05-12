@@ -48,6 +48,10 @@ struct DiffDriveTwist timeout_cmd = {
 	.linear_x = 0,
 };
 
+/* Velocity and PWM ranges */
+float vel_range[] = {-3,3};
+uint32_t pwm_range[] = {1100, 1900};
+
 
 static uint8_t rx_buf[100];
 static int rx_buf_pos;
@@ -70,11 +74,15 @@ void serial_cb(const struct device *dev, void *user_data)
 	while (uart_fifo_read(uart_dev, &c, 1) == 1) {
 		struct mother_msg msg;
 
-		if (c == 0 && rx_buf_pos > 0) {
+		if (c == 0x00 && rx_buf_pos > 0) {
 			// uart_fifo_read(uart_dev, &c, 1);
 			/* terminate the message with 0x00 */
 			rx_buf[rx_buf_pos] = 0;
-
+			
+			if (rx_buf_pos != (sizeof(struct mother_msg) - 1)) {
+				continue;
+			}
+			// Add deserialization guard
 			deserialize(rx_buf, (uint8_t *)&msg, sizeof(msg));
 
 			/* if queue is full, message is silently dropped */
@@ -140,11 +148,11 @@ int velocity_callback(const float *velocity_buffer, int buffer_len, int wheels_p
 	if (buffer_len < wheels_per_side*2) return 1;
 	
 	for(int i = 0; i < wheels_per_side; i++) {
-		if(pwm_motor_write(&(motor[i]), velocity_to_pwm(*(velocity_buffer + i), 3))) {
+		if(pwm_motor_write(&(motor[i]), velocity_pwm_interpolation(*(velocity_buffer + i), vel_range, pwm_range))) {
 			LOG_ERR("Drive: Unable to write pwm pulse to Left : %d", i);
 			return 1;
 		}
-		if(pwm_motor_write(&(motor[i]), velocity_to_pwm(*(velocity_buffer + wheels_per_side + i), 3))) {
+		if(pwm_motor_write(&(motor[i]), velocity_pwm_interpolation(*(velocity_buffer + wheels_per_side + i), vel_range, pwm_range))) {
 			LOG_ERR("Drive: Unable to write pwm pulse to Right : %d", i);
 			return 1;
 		}

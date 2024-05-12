@@ -275,19 +275,27 @@ void diffdrive_odometry_reset_accumulators(struct DiffDriveOdometry *odom)
 		float_rolling_mean_accumulator_init(odom->config.velocity_rolling_window_size);
 }
 
-/* Velocity to pwm  */
-int velocity_to_pwm(float velocity, float limit) {
-	if(velocity > limit) {
-		return limit;
+/*
+ * Velocity to PWM linear interpolation
+ */
+
+uint32_t velocity_pwm_interpolation(float velocity, float* vel_range, uint32_t* pwm_range) {
+	if(velocity > vel_range[1]) {
+		return pwm_range[1];
 	}
 	
-	if(velocity < (-1)*limit) {
-		return (-1)*limit;
+	if(velocity < vel_range[0]) {
+		return pwm_range[0];
 	}
 	
 	if(abs((int)velocity*100) == 0){
-		return 1500000;
+		return (uint32_t)((pwm_range[0] + pwm_range[1])/2);
 	}
 
-	return 1500000;	
+	float dvel = vel_range[1] - vel_range[0];
+	float dpwm = pwm_range[1] - pwm_range[0];
+	
+	uint32_t pwm_interp = pwm_range[0] + (dpwm/dvel)*(velocity - vel_range[0]);
+
+	return pwm_interp;
 }

@@ -1,0 +1,1 @@
+add_subdirectory_ifdef(CONFIG_QDEC_DIST_STM32 wheel_encoders_stm32)

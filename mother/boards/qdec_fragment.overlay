@@ -1,0 +1,18 @@
+/ {
+	aliases {
+		qdec0 = &qdec;
+	};
+};
+
+&timers5 {
+	status = "okay";
+	qdec: qdec {
+		compatible = "st,stm32-qdec-distance";
+		status = "okay";
+		pinctrl-0 = <&tim5_ch3_pa2 &tim5_ch4_pa3>;
+		pinctrl-names = "default";
+		st,input-polarity-inverted;
+		st,input-filter-level = <FDIV32_N8>;
+		st,counts-per-revolution = <4706>;
+	};
+};

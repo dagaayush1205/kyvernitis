@@ -1,0 +1,3 @@
+if SENSOR
+rsource "wheel_encoders_stm32/Kconfig"
+endif 

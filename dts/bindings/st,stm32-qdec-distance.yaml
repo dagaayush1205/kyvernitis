@@ -1,0 +1,7 @@
+description: STM32 quadrature decoder
+
+compatible: "st,stm32-qdec-distance"
+
+include:
+  - name: st,stm32-qdec.yaml
+

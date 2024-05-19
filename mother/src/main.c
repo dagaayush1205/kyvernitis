@@ -50,7 +50,7 @@ struct DiffDriveTwist timeout_cmd = {
 
 /* Velocity and PWM ranges */
 float vel_range[] = {-3,3};
-uint32_t pwm_range[] = {1100, 1900};
+uint32_t pwm_range[] = {1100000, 1900000};
 
 
 static uint8_t rx_buf[100];
@@ -121,7 +121,7 @@ bool valid_crc(struct mother_msg *msg)
 {
 	uint32_t rcd_crc = msg->crc;
 	uint32_t comp_crc =
-		crc32_ieee((uint8_t *)&msg, sizeof(struct mother_msg) - sizeof(uint32_t));
+		crc32_ieee((uint8_t *)msg, sizeof(struct mother_msg) - sizeof(uint32_t));
 
 	if (rcd_crc != comp_crc) {
 		return false;

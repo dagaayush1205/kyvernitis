@@ -34,8 +34,8 @@ struct qdec_stm32_dev_cfg {
 /* Device run time data */
 struct qdec_stm32_dev_data {
 	int32_t position;
-	int64_t ticks;
-	int64_t raw;
+	uint16_t ticks;
+	int64_t count;
 };
 
 static int qdec_stm32_fetch(const struct device *dev, enum sensor_channel chan)
@@ -44,7 +44,7 @@ static int qdec_stm32_fetch(const struct device *dev, enum sensor_channel chan)
 	const struct qdec_stm32_dev_cfg *dev_cfg = dev->config;
 	uint32_t counter_value;
 	uint32_t curr_ticks;
-	int64_t last_ticks = dev_data->ticks;
+	uint32_t last_ticks = dev_data->ticks;
 
 	if ((chan != SENSOR_CHAN_ALL) && (chan != SENSOR_CHAN_ROTATION)) {
 		return -ENOTSUP;
@@ -58,13 +58,17 @@ static int qdec_stm32_fetch(const struct device *dev, enum sensor_channel chan)
 	dev_data->position = (counter_value * 360) / dev_cfg->counts_per_revolution;
 
 	curr_ticks = LL_TIM_GetCounter(dev_cfg->timer_inst);
-	dev_data->raw = LL_TIM_GetCounter(dev_cfg->timer_inst);
-
-	if(llabs(curr_ticks - last_ticks) > 2147483648) {
-		dev_data->ticks = -1 * (4294967296 - curr_ticks);
-
+	dev_data->ticks = curr_ticks;
+	// dev_data->raw = LL_TIM_GetCounter(dev_cfg->timer_inst);
+	int64_t diff = (int64_t)curr_ticks - last_ticks;
+	if(llabs(diff) > UINT16_MAX/2 && diff > 0) {
+		diff -= UINT16_MAX;
 	}
-	else dev_data->ticks = curr_ticks;
+	if (llabs(diff) > UINT16_MAX/2 && diff < 0) {
+		diff += UINT16_MAX;
+	}
+
+	dev_data->count += diff;
 
 	return 0;
 }
@@ -79,10 +83,10 @@ static int qdec_stm32_get(const struct device *dev, enum sensor_channel chan,
 		val->val2 = 0;
 	} 
 	else if (chan == SENSOR_CHAN_ALL){
-		val->val1 = (dev_data->ticks) / (int64_t)pow(10, 6);
-		int64_t mod = llabs(dev_data->ticks) % (int64_t)pow(10,6);
+		val->val1 = (dev_data->count) / (int64_t)pow(10, 6);
+		int64_t mod = llabs(dev_data->count) % (int64_t)pow(10,6);
 
-		if (dev_data->ticks < 0)
+		if (dev_data->count < 0)
 			val->val2 = -mod; // Here the val2 is ticks instead of accuracy
 		else val->val2 = mod;
 	}
@@ -96,6 +100,7 @@ static int qdec_stm32_get(const struct device *dev, enum sensor_channel chan,
 static int qdec_stm32_initialize(const struct device *dev)
 {
 	const struct qdec_stm32_dev_cfg *const dev_cfg = dev->config;
+
 	int retval;
 	LL_TIM_ENCODER_InitTypeDef init_props;
 	uint32_t max_counter_value;

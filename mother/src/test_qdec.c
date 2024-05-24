@@ -4,19 +4,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/pwm.h>
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/sys/printk.h>
 
+#include <kyvernitis/lib/kyvernitis.h>
+#include <zephyr/drivers/gpio.h>
+#define PWM_MOTOR_SETUP(pwm_dev_id)                                                                \
+	{.dev_spec = PWM_DT_SPEC_GET(pwm_dev_id),                                                  \
+	 .min_pulse = DT_PROP(pwm_dev_id, min_pulse),                                              \
+	 .max_pulse = DT_PROP(pwm_dev_id, max_pulse)},
+struct pwm_motor roboclaw[2] = {DT_FOREACH_CHILD(DT_PATH(pwmmotors), PWM_MOTOR_SETUP)};
 #define QUAD_ENC_EMUL_ENABLED \
 	DT_NODE_EXISTS(DT_ALIAS(qenca)) && DT_NODE_EXISTS(DT_ALIAS(qencb))
 
 #if QUAD_ENC_EMUL_ENABLED
 
-#include <zephyr/drivers/gpio.h>
 
 #define QUAD_ENC_EMUL_PERIOD 100
+
 
 static const struct gpio_dt_spec phase_a =
 			GPIO_DT_SPEC_GET(DT_ALIAS(qenca), gpios);
@@ -83,6 +92,12 @@ int main(void)
 
 	printk("Quadrature decoder sensor test\n");
 
+	for (size_t i = 0U; i < ARRAY_SIZE(roboclaw); i++) {
+		if (!pwm_is_ready_dt(&(roboclaw[i].dev_spec))) {
+			printk("PWM: Roboclaw %s is not ready\n", roboclaw[i].dev_spec.dev->name);
+			return 0;
+		}
+	}
 	qenc_emulate_init();
 	int64_t ticks;
 	while (true) {
@@ -104,6 +119,16 @@ int main(void)
 		printk("Ticks = %lld \n", ticks);
 		printk("Revs = %d \n", rev);
 
+		int pulse = 1900000;
+		if(pwm_motor_write(&roboclaw[0], pulse)) {
+			printk("Unable to write pwm pulse to PWM Motor : %d", 0);
+			return 0;
+		}
+
+		if(pwm_motor_write(&roboclaw[1], pulse)) {
+			printk("Unable to write pwm pulse to PWM Motor : %d", 1);
+			return 0;
+		}
 		k_msleep(1000);
 	}
 	return 0;

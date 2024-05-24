@@ -1,4 +1,17 @@
 / {
+	pwmmotors {
+		compatible = "pwm-motors";
+		pwm_motor_17: pwm_17 {
+			pwms  = <&pwm10 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1100)>;
+			max-pulse = <PWM_USEC(1900)>;
+		};
+		pwm_motor_18: pwm_18 {
+			pwms  = <&pwm11 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1100)>;
+			max-pulse = <PWM_USEC(1900)>;
+		};
+	};
 	aliases {
 		qdec0 = &qdec;
 	};
@@ -14,5 +27,27 @@
 		st,input-polarity-inverted;
 		st,input-filter-level = <FDIV32_N5>;
 		st,counts-per-revolution = <4706>;
+	};
+};
+
+&timers10 {
+	status = "okay";
+	st,prescaler = <3359>;
+
+	pwm10: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim10_ch1_pb8>;
+		pinctrl-names = "default";
+	};
+};
+
+&timers11 {
+	status = "okay";
+	st,prescaler = <3359>;
+
+	pwm11: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim11_ch1_pb9>;
+		pinctrl-names = "default";
 	};
 };

@@ -193,13 +193,13 @@ bool valid_crc(struct mother_msg *msg)
  * Position feedback callback function
  */ 
 
-int32_t ticks1, ticks2;
+float ticks1, ticks2;
 int feedback_callback(float *feedback_buffer, int buffer_len, int wheels_per_side)
 {
   if (buffer_len < wheels_per_side*2) return 1;
 	for (int i = 0; i < wheels_per_side; i++) {
-	  feedback_buffer[i] = ticks1 / 4706;
-	  feedback_buffer[wheels_per_side + i] = ticks2 / 4706;
+	  feedback_buffer[i] = ticks1 / 4706 * 2 * 3.141592f;
+	  feedback_buffer[wheels_per_side + i] = ticks2 / 4706 * 2 * 3.141592f;
 	}
 	return 0;
 }

@@ -6,6 +6,7 @@
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/sensor.h>
 #include <zephyr/sys/crc.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/logging/log.h>
@@ -16,6 +17,64 @@
 #include <kyvernitis/lib/kyvernitis.h>
 
 LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
+#define QUAD_ENC_EMUL_ENABLED \
+	DT_NODE_EXISTS(DT_ALIAS(qenca)) && DT_NODE_EXISTS(DT_ALIAS(qencb))
+
+#if QUAD_ENC_EMUL_ENABLED
+
+static const struct gpio_dt_spec phase_a =
+			GPIO_DT_SPEC_GET(DT_ALIAS(qenca), gpios);
+static const struct gpio_dt_spec phase_b =
+			GPIO_DT_SPEC_GET(DT_ALIAS(qencb), gpios);
+static bool toggle_a;
+
+void qenc_emulate_work_handler(struct k_work *work)
+{
+	toggle_a = !toggle_a;
+	if (toggle_a) {
+		gpio_pin_toggle_dt(&phase_a);
+	} else {
+		gpio_pin_toggle_dt(&phase_b);
+	}
+}
+
+static K_WORK_DEFINE(qenc_emulate_work, qenc_emulate_work_handler);
+
+static void qenc_emulate_timer_handler(struct k_timer *dummy)
+{
+	k_work_submit(&qenc_emulate_work);
+}
+
+static K_TIMER_DEFINE(qenc_emulate_timer, qenc_emulate_timer_handler, NULL);
+
+static void qenc_emulate_init(void)
+{
+	printk("Quadrature encoder emulator enabled with %u ms period\n",
+		QUAD_ENC_EMUL_PERIOD);
+
+	if (!gpio_is_ready_dt(&phase_a)) {
+		printk("%s: device not ready.", phase_a.port->name);
+		return;
+	}
+	gpio_pin_configure_dt(&phase_a, GPIO_OUTPUT);
+
+	if (!gpio_is_ready_dt(&phase_b)) {
+		printk("%s: device not ready.", phase_b.port->name);
+		return;
+	}
+	gpio_pin_configure_dt(&phase_b, GPIO_OUTPUT);
+
+	k_timer_start(&qenc_emulate_timer, K_MSEC(QUAD_ENC_EMUL_PERIOD / 2),
+			K_MSEC(QUAD_ENC_EMUL_PERIOD / 2));
+}
+
+#else
+
+static void qenc_emulate_init(void) { };
+
+#endif /* QUAD_ENC_EMUL_ENABLED */
+
+#define QUAD_ENC_EMUL_PERIOD 100
 
 /* msg size in relation to cobs serialization */
 #define UART_MSG_SIZE        (sizeof(struct mother_msg) + 2)
@@ -37,7 +96,7 @@ K_THREAD_STACK_DEFINE(uart_can_thread_stack, TX_THREAD_STACK_SIZE);
 static const struct device *const uart_dev = DEVICE_DT_GET(DT_ALIAS(mother_uart));
 
 /* DT spec for pwm motors */
-struct pwm_motor motor[20] = {DT_FOREACH_CHILD(DT_PATH(pwmmotors), PWM_MOTOR_SETUP)};
+struct pwm_motor motor[13] = {DT_FOREACH_CHILD(DT_PATH(pwmmotors), PWM_MOTOR_SETUP)};
 
 /* DT spec for LED */
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
@@ -134,12 +193,13 @@ bool valid_crc(struct mother_msg *msg)
  * Position feedback callback function
  */ 
 
+int32_t ticks1, ticks2;
 int feedback_callback(float *feedback_buffer, int buffer_len, int wheels_per_side)
 {
   if (buffer_len < wheels_per_side*2) return 1;
 	for (int i = 0; i < wheels_per_side; i++) {
-	  feedback_buffer[i] = 1.0f;
-	  feedback_buffer[wheels_per_side + i] = 1.0f;
+	  feedback_buffer[i] = ticks1 / 4706;
+	  feedback_buffer[wheels_per_side + i] = ticks2 / 4706;
 	}
 	return 0;
 }
@@ -204,6 +264,12 @@ int main()
 
 	/* Device ready checks */
 
+	const struct device *const qdec0 = DEVICE_DT_GET(DT_ALIAS(qdec0));
+	const struct device *const qdec1 = DEVICE_DT_GET(DT_ALIAS(qdec1));
+	if (!device_is_ready(qdec0) || !device_is_ready(qdec1)) {
+		LOG_ERR("Qdec device not ready\n");
+		return 0;
+	}
 	if (!device_is_ready(uart_dev)) {
 		LOG_ERR("UART device not found!");
 		return 0;
@@ -215,7 +281,9 @@ int main()
 			return 0;
 		}
 	}
-
+	qenc_emulate_init();
+	int rc;
+	struct sensor_value val1, val2;
 
 	if (!gpio_is_ready_dt(&led)) {
 		LOG_ERR("Error: Led not ready.");
@@ -263,26 +331,72 @@ int main()
 
 	struct mother_msg msg;
 
+	int valid = 1;
 	while (true) {
-		if (k_msgq_get(&uart_msgq, &msg, K_SECONDS(2))) {
-			LOG_INF("Message Receive Timeout!!");
-			diffdrive_update(drive, timeout_cmd, drive_timestamp);
+		rc = sensor_sample_fetch(qdec0);
+		if (rc != 0) {
+			printk("Failed to fetch sample (%d)\n", rc);
+			return 0;
+		}
 
-			continue;
+		rc = sensor_channel_get(qdec0, SENSOR_CHAN_ALL, &val1);
+		if (rc != 0) {
+			printk("Failed to get data (%d)\n", rc);
+			return 0;
+		}
+		ticks1 = val1.val1 * pow(10,6) + val1.val2;
+		// printk("Ticks1 = %lld \n", ticks1);
+		// printk("Revs = %d\n", rev1);
+
+		rc = sensor_sample_fetch(qdec1);
+		if (rc != 0) {
+			printk("Failed to fetch sample (%d)\n", rc);
+			return 0;
+		}
+
+		rc = sensor_channel_get(qdec1, SENSOR_CHAN_ALL, &val2);
+		if (rc != 0) {
+			printk("Failed to get data (%d)\n", rc);
+			return 0;
+		}
+		ticks2 = val2.val1 * pow(10,6) + val2.val2;
+
+		// printk("Ticks2 = %lld \n", ticks2);
+		// printk("Revs = %d\n", rev2);
+
+		if (k_msgq_get(&uart_msgq, &msg, K_SECONDS(2))) {
+			// LOG_INF("Message Receive Timeout!!");
+			diffdrive_update(drive, timeout_cmd, drive_timestamp);
+			valid = 0;
+			// continue;
 		}
 
 		if (!valid_crc(&msg)) {
-			continue;
+			valid = 0;
+			// continue;
 		}
 
 
-		switch (msg.type) {
-		case T_MOTHER_CMD_DRIVE:
-			drive_timestamp = k_uptime_get();
-			diffdrive_update(drive, msg.cmd.drive_cmd, time_last_drive_update);
-			time_last_drive_update = k_uptime_get() - drive_timestamp; 
+		if (valid) {
+			switch (msg.type) {
+			case T_MOTHER_CMD_DRIVE:
+				drive_timestamp = k_uptime_get();
+				diffdrive_update(drive, msg.cmd.drive_cmd, time_last_drive_update);
+				time_last_drive_update = k_uptime_get() - drive_timestamp; 
+				gpio_pin_toggle_dt(&led);
+			}
 		}
 
-		gpio_pin_toggle_dt(&led);
+		struct DiffDriveStatus ds = diffdrive_status(drive);
+		struct mother_status_msg status_msg = {.odom = ds};
+		struct mother_msg m_msg = {.type = T_MOTHER_STATUS, .status = status_msg };
+		uint32_t crc = crc32_ieee((uint8_t*) &m_msg, sizeof(struct mother_msg) - sizeof(uint32_t));
+		m_msg.crc = crc;
+
+		uint8_t msg_buf[UART_MSG_SIZE];
+		serialize(msg_buf, (uint8_t*)&m_msg, sizeof(struct mother_msg));
+		send_to_uart(msg_buf, UART_MSG_SIZE);
+
+		valid = 1;
 	}
 }

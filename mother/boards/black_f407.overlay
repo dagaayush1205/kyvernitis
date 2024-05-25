@@ -1,68 +1,58 @@
 / {
 	pwmmotors {
 		compatible = "pwm-motors";
-		pwm_motor_1: pwm_1 {
+		sabertooth1_1: pwm_1 {
 			pwms  = <&pwm1 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
 			min-pulse = <PWM_USEC(1100)>;
 			max-pulse = <PWM_USEC(1900)>;
 		};
-		pwm_motor_2: pwm_2 {
+		sabertooth1_2: pwm_2 {
 			pwms  = <&pwm1 2 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
 			min-pulse = <PWM_USEC(1100)>;
 			max-pulse = <PWM_USEC(1900)>;
 		};
-		pwm_motor_3: pwm_3 {
+		sabertooth3_1: pwm_3 {
 			pwms  = <&pwm1 3 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
 			min-pulse = <PWM_USEC(1100)>;
 			max-pulse = <PWM_USEC(1900)>;
 		};
-		pwm_motor_4: pwm_4 {
+		sabertooth3_2: pwm_4 {
+			pwms  = <&pwm1 4 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1100)>;
+			max-pulse = <PWM_USEC(1900)>;
+		};
+		cytron1_1: pwm_5 {
 			pwms  = <&pwm2 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
 			min-pulse = <PWM_USEC(1100)>;
 			max-pulse = <PWM_USEC(1900)>;
 		};
-		pwm_motor_5: pwm_5 {
+		cytron1_2: pwm_6 {
 			pwms  = <&pwm2 2 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
 			min-pulse = <PWM_USEC(1100)>;
 			max-pulse = <PWM_USEC(1900)>;
 		};
-		pwm_motor_6: pwm_6 {
+		cytron3_1: pwm_7 {
+			pwms  = <&pwm2 3 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1100)>;
+			max-pulse = <PWM_USEC(1900)>;
+		};
+		cytron3_2: pwm_8 {
 			pwms  = <&pwm2 4 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
 			min-pulse = <PWM_USEC(1100)>;
 			max-pulse = <PWM_USEC(1900)>;
 		};
-		pwm_motor_7: pwm_7 {
-			pwms  = <&pwm3 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
-			min-pulse = <PWM_USEC(1100)>;
-			max-pulse = <PWM_USEC(1900)>;
-		};
-		pwm_motor_8: pwm_8 {
-			pwms  = <&pwm3 2 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
-			min-pulse = <PWM_USEC(1100)>;
-			max-pulse = <PWM_USEC(1900)>;
-		};
-		pwm_motor_9: pwm_9 {
-			pwms  = <&pwm3 4 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
-			min-pulse = <PWM_USEC(1100)>;
-			max-pulse = <PWM_USEC(1900)>;
-		};
-		pwm_motor_17: pwm_17 {
+		servo_1: pwm_9 {
 			pwms  = <&pwm10 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
 			min-pulse = <PWM_USEC(1100)>;
 			max-pulse = <PWM_USEC(1900)>;
 		};
-		pwm_motor_18: pwm_18 {
+		servo_2: pwm_10 {
 			pwms  = <&pwm11 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
 			min-pulse = <PWM_USEC(1100)>;
 			max-pulse = <PWM_USEC(1900)>;
 		};
-		pwm_motor_19: pwm_19 {
-			pwms  = <&pwm12 2 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
-			min-pulse = <PWM_USEC(1100)>;
-			max-pulse = <PWM_USEC(1900)>;
-		};
-		pwm_motor_20: pwm_20 {
-			pwms  = <&pwm13 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+		servo_3: pwm_11 {
+			pwms  = <&pwm14 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
 			min-pulse = <PWM_USEC(1100)>;
 			max-pulse = <PWM_USEC(1900)>;
 		};
@@ -70,9 +60,22 @@
 
 	aliases {
 		mother-uart = &usart2;
-		qdec0 = &qenc0;
-		qdec1 = &qenc1;
+		en-fr = &qenc_fr;
+		en-fl = &qenc_fl;
+		en-br = &qenc_br;
+		en-bl = &qenc_bl;
 	};
+};
+
+&usart1 {
+	current-speed = <921600>;
+};
+
+&usart2 {
+	pinctrl-0 = <&usart2_tx_pd5 &usart2_rx_pd6>;
+	pinctrl-names = "default";
+	current-speed = <921600>;
+	status = "okay";
 };
 
 &timers1 {
@@ -81,7 +84,7 @@
 
 	pwm1: pwm {
 		status = "okay";
-		pinctrl-0 = <&tim1_ch1_pe9 &tim1_ch2_pe11 &tim1_ch3_pe13>;
+		pinctrl-0 = <&tim1_ch1_pe9 &tim1_ch2_pe11 &tim1_ch3_pe13 &tim1_ch4_pe14>;
 		pinctrl-names = "default";
 	};
 };
@@ -92,22 +95,10 @@
 
 	pwm2: pwm {
 		status = "okay";
-		pinctrl-0 = <&tim2_ch1_pa5 &tim2_ch2_pa1 &tim2_ch4_pb11>;
+		pinctrl-0 = <&tim2_ch1_pa5 &tim2_ch2_pa1 &tim2_ch3_pa2 &tim2_ch4_pa3>;
 		pinctrl-names = "default";
 	};
 };
-
-&timers3 {
-	status = "okay";
-	st,prescaler = <3359>;
-
-	pwm3: pwm {
-		status = "okay";
-		pinctrl-0 = <&tim3_ch1_pc6 &tim3_ch2_pa7 &tim3_ch4_pb1>;
-		pinctrl-names = "default";
-	};
-};
-
 
 &timers10 {
 	status = "okay";
@@ -131,30 +122,33 @@
 	};
 };
 
-&timers12 {
+&timers14 {
 	status = "okay";
 	st,prescaler = <3359>;
 
-	pwm12: pwm {
+	pwm14: pwm {
 		status = "okay";
-		pinctrl-0 = <&tim12_ch2_pb15>;
+		pinctrl-0 = <&tim14_ch1_pa7>;
 		pinctrl-names = "default";
 	};
 };
 
-&timers13 {
+&timers3 {
 	status = "okay";
-	st,prescaler = <3359>;
-
-	pwm13: pwm {
+	qenc_fr: qdec {
+		compatible = "st,stm32-qdec-distance";
 		status = "okay";
-		pinctrl-0 = <&tim13_ch1_pa6>;
+		pinctrl-0 = <&tim3_ch1_pc6 &tim3_ch2_pc7>;
 		pinctrl-names = "default";
+		st,input-polarity-inverted;
+		st,input-filter-level = <FDIV32_N5>;
+		st,counts-per-revolution = <4706>;
 	};
 };
+
 &timers4 {
 	status = "okay";
-	qenc0: qdec {
+	qenc_fl: qdec {
 		compatible = "st,stm32-qdec-distance";
 		status = "okay";
 		pinctrl-0 = <&tim4_ch1_pd12 &tim4_ch2_pd13>;
@@ -165,12 +159,25 @@
 	};
 };
 
-&timers8 {
+&timers9 {
 	status = "okay";
-	qenc1: qdec {
+	qenc_br: qdec {
 		compatible = "st,stm32-qdec-distance";
 		status = "okay";
-		pinctrl-0 = <&tim8_ch1_pc6 &tim8_ch2_pc7>;
+		pinctrl-0 = <&tim9_ch1_pe5 &tim9_ch2_pe6>;
+		pinctrl-names = "default";
+		st,input-polarity-inverted;
+		st,input-filter-level = <FDIV32_N5>;
+		st,counts-per-revolution = <4706>;
+	};
+};
+
+&timers12 {
+	status = "okay";
+	qenc_bl: qdec {
+		compatible = "st,stm32-qdec-distance";
+		status = "okay";
+		pinctrl-0 = <&tim12_ch1_pb14 &tim12_ch2_pb15>;
 		pinctrl-names = "default";
 		st,input-polarity-inverted;
 		st,input-filter-level = <FDIV32_N5>;

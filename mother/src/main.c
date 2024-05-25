@@ -264,8 +264,8 @@ int main()
 
 	/* Device ready checks */
 
-	const struct device *const qdec0 = DEVICE_DT_GET(DT_ALIAS(qdec0));
-	const struct device *const qdec1 = DEVICE_DT_GET(DT_ALIAS(qdec1));
+	const struct device *const qdec0 = DEVICE_DT_GET(DT_ALIAS(en_br));
+	const struct device *const qdec1 = DEVICE_DT_GET(DT_ALIAS(en_bl));
 	if (!device_is_ready(qdec0) || !device_is_ready(qdec1)) {
 		LOG_ERR("Qdec device not ready\n");
 		return 0;

@@ -79,16 +79,39 @@ static void qenc_emulate_init(void) { };
 
 #endif /* QUAD_ENC_EMUL_ENABLED */
 
+int get_ticks(int64_t *ticks, const struct device *const dev, struct sensor_value *val) {
+	int rc;
+	rc = sensor_sample_fetch(dev);
+	if (rc != 0) {
+		printk("Failed to fetch sample (%d)\n", rc);
+		return 0;
+	}
+
+	rc = sensor_channel_get(dev, SENSOR_CHAN_ALL, val);
+	if (rc != 0) {
+		printk("Failed to get data (%d)\n", rc);
+		return 0;
+	}
+	
+	*ticks = val->val1 * pow(10,6) + val->val2;
+}
+
 int main(void)
 {
 	struct sensor_value val;
-	int rc;
-	const struct device *const dev = DEVICE_DT_GET(DT_ALIAS(qdec0));
+	const struct device *const en_fr = DEVICE_DT_GET(DT_ALIAS(en_fr));
+	const struct device *const en_fl = DEVICE_DT_GET(DT_ALIAS(en_fl));
 
-	if (!device_is_ready(dev)) {
-		printk("Qdec device is not ready\n");
+
+	if (!device_is_ready(en_fr)) {
+		printk("Qdec Front-Right device is not ready\n");
 		return 0;
 	}
+	if (!device_is_ready(en_fl)) {
+		printk("Qdec Front-Left device is not ready\n");
+		return 0;
+	}
+
 
 	printk("Quadrature decoder sensor test\n");
 
@@ -101,23 +124,11 @@ int main(void)
 	qenc_emulate_init();
 	int64_t ticks;
 	while (true) {
-		rc = sensor_sample_fetch(dev);
-		if (rc != 0) {
-			printk("Failed to fetch sample (%d)\n", rc);
-			return 0;
-		}
+		get_ticks(&ticks, en_fr, &val);	
+		printk("Front-Right: %lld \n", ticks);
+		get_ticks(&ticks, en_fl, &val);	
+		printk("Front-Left: %lld \n", ticks);
 
-		rc = sensor_channel_get(dev, SENSOR_CHAN_ALL, &val);
-		if (rc != 0) {
-			printk("Failed to get data (%d)\n", rc);
-			return 0;
-		}
-	
-		ticks = val.val1 * pow(10,6) + val.val2;
-		
-		int32_t rev = ticks/ 4706;
-		printk("Ticks = %lld \n", ticks);
-		printk("Revs = %d \n", rev);
 
 		int pulse = 1900000;
 		if(pwm_motor_write(&roboclaw[0], pulse)) {

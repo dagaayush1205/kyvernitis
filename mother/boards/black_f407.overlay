@@ -62,8 +62,6 @@
 		mother-uart = &usart2;
 		en-fr = &qenc_fr;
 		en-fl = &qenc_fl;
-		en-br = &qenc_br;
-		en-bl = &qenc_bl;
 	};
 };
 
@@ -159,28 +157,34 @@
 	};
 };
 
-&timers9 {
+&i2c1 {
 	status = "okay";
-	qenc_br: qdec {
-		compatible = "st,stm32-qdec-distance";
+	pinctrl-0  = <&i2c1_scl_pb6 &i2c1_sda_pb7>;
+	pinctrl-names = "default";
+	mpu6050@68 {
+		compatibe = "invensense,mpu6050";
+		reg = <0x68>;
 		status = "okay";
-		pinctrl-0 = <&tim9_ch1_pe5 &tim9_ch2_pe6>;
-		pinctrl-names = "default";
-		st,input-polarity-inverted;
-		st,input-filter-level = <FDIV32_N5>;
-		st,counts-per-revolution = <4706>;
+	};
+	mpu6050@69 {
+		compatibe = "invensense,mpu6050";
+		reg = <0x69>;
+		status = "okay";
 	};
 };
 
-&timers12 {
+&i2c2 {
 	status = "okay";
-	qenc_bl: qdec {
-		compatible = "st,stm32-qdec-distance";
+	pinctrl-0  = <&i2c2_scl_pb10 &i2c2_sda_pb11>;
+	pinctrl-names = "default";
+	mpu6050@68 {
+		compatibe = "invensense,mpu6050";
+		reg = <0x68>;
 		status = "okay";
-		pinctrl-0 = <&tim12_ch1_pb14 &tim12_ch2_pb15>;
-		pinctrl-names = "default";
-		st,input-polarity-inverted;
-		st,input-filter-level = <FDIV32_N5>;
-		st,counts-per-revolution = <4706>;
+	};
+	mpu6050@69 {
+		compatibe = "invensense,mpu6050";
+		reg = <0x69>;
+		status = "okay";
 	};
 };

@@ -18,6 +18,8 @@
 	 .min_pulse = DT_PROP(pwm_dev_id, min_pulse),                                              \
 	 .max_pulse = DT_PROP(pwm_dev_id, max_pulse)},
 struct pwm_motor roboclaw[2] = {DT_FOREACH_CHILD(DT_PATH(pwmmotors), PWM_MOTOR_SETUP)};
+static const struct gpio_dt_spec led_1 = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
+
 #define QUAD_ENC_EMUL_ENABLED \
 	DT_NODE_EXISTS(DT_ALIAS(qenca)) && DT_NODE_EXISTS(DT_ALIAS(qencb))
 
@@ -112,7 +114,14 @@ int main(void)
 		return 0;
 	}
 
-
+	if (!gpio_is_ready_dt(&led_1)) {
+		printk("Error: Led not ready.");
+		return 0;
+	}
+	if (gpio_pin_configure_dt(&led_1, GPIO_OUTPUT_ACTIVE) < 0) {
+		printk("Error: Led not configured");
+		return 0;
+	}
 	printk("Quadrature decoder sensor test\n");
 
 	for (size_t i = 0U; i < ARRAY_SIZE(roboclaw); i++) {
@@ -140,6 +149,7 @@ int main(void)
 			printk("Unable to write pwm pulse to PWM Motor : %d", 1);
 			return 0;
 		}
+		gpio_pin_toggle_dt(&led_1);
 		k_msleep(1000);
 	}
 	return 0;

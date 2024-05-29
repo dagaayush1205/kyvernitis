@@ -16,6 +16,7 @@
 #include <zephyr/logging/log.h>
 
 #include <stm32_ll_tim.h>
+#include <math.h>
 
 LOG_MODULE_REGISTER(qdec_stm32, CONFIG_SENSOR_LOG_LEVEL);
 
@@ -33,7 +34,6 @@ struct qdec_stm32_dev_cfg {
 
 /* Device run time data */
 struct qdec_stm32_dev_data {
-	int32_t position;
 	uint16_t ticks;
 	int64_t count;
 };
@@ -42,7 +42,6 @@ static int qdec_stm32_fetch(const struct device *dev, enum sensor_channel chan)
 {
 	struct qdec_stm32_dev_data *dev_data = dev->data;
 	const struct qdec_stm32_dev_cfg *dev_cfg = dev->config;
-	uint32_t counter_value;
 	uint32_t curr_ticks;
 	uint32_t last_ticks = dev_data->ticks;
 
@@ -50,16 +49,8 @@ static int qdec_stm32_fetch(const struct device *dev, enum sensor_channel chan)
 		return -ENOTSUP;
 	}
 
-	/* We're only interested in the remainder between the current counter value and
-	 * counts_per_revolution. The integer part represents an entire rotation so it
-	 * can be ignored
-	 */
-	counter_value = LL_TIM_GetCounter(dev_cfg->timer_inst) % dev_cfg->counts_per_revolution;
-	dev_data->position = (counter_value * 360) / dev_cfg->counts_per_revolution;
-
 	curr_ticks = LL_TIM_GetCounter(dev_cfg->timer_inst);
 	dev_data->ticks = curr_ticks;
-	// dev_data->raw = LL_TIM_GetCounter(dev_cfg->timer_inst);
 	int64_t diff = (int64_t)curr_ticks - last_ticks;
 	if(llabs(diff) > UINT16_MAX/2 && diff > 0) {
 		diff -= UINT16_MAX;
@@ -78,11 +69,7 @@ static int qdec_stm32_get(const struct device *dev, enum sensor_channel chan,
 {
 	struct qdec_stm32_dev_data *const dev_data = dev->data;
 
-	if (chan == SENSOR_CHAN_ROTATION) {
-		val->val1 = dev_data->position;
-		val->val2 = 0;
-	} 
-	else if (chan == SENSOR_CHAN_ALL){
+	if (chan == SENSOR_CHAN_ALL){
 		val->val1 = (dev_data->count) / (int64_t)pow(10, 6);
 		int64_t mod = llabs(dev_data->count) % (int64_t)pow(10,6);
 

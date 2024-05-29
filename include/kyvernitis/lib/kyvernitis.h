@@ -4,7 +4,7 @@
 #include <zephyr/drivers/pwm.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
-
+#include <zephyr/drivers/sensor.h>
 #include <zephyr/drivers/pwm.h>
 #include <zephyr/drivers/gpio.h>
 
@@ -85,3 +85,5 @@ float MQ7_readings(int adc_reading);
 float MQ136_readings(int adc_reading);
 
 float MQ137_readings(int adc_reading);
+
+void get_encoder_ticks(int64_t *ticks, const struct device *const dev, struct sensor_value *val);

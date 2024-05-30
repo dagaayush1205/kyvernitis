@@ -28,7 +28,9 @@ enum MotherMsgType {
 	T_MOTHER_CMD_DRIVE,
 	T_MOTHER_CMD_ARM,
 	T_MOTHER_CMD_LA,
-	T_MOTHER_STATUS
+	T_MOTHER_STATUS,
+	T_MOTHER_ERROR,
+	T_MOTHER_INFO
 };
 
 struct pwm_motor {
@@ -49,12 +51,13 @@ struct dc_motor {
 
 struct mother_cmd_msg {
 	struct DiffDriveTwist drive_cmd;
-	uint8_t arm_joint[5];
+	float arm_joint[3];
 	uint8_t adaptive_sus_cmd[4];
 };
 
 struct mother_status_msg {
 	struct DiffDriveStatus odom;
+	float arm_joint_status[3];
 	uint64_t timestamp;
 };
 
@@ -62,6 +65,7 @@ struct mother_msg {
 	uint16_t type;
 	struct mother_status_msg status;
 	struct mother_cmd_msg cmd;
+	char info[100];
 	uint32_t crc;
 };
 

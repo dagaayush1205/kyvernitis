@@ -18,7 +18,7 @@
 LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
 /* msg size in relation to cobs serialization */
-#define UART_MSG_SIZE        (sizeof(struct mother_msg) + 2)
+#define UART_MSG_SIZE (sizeof(struct mother_msg) + 2)
 
 #define PWM_MOTOR_SETUP(pwm_dev_id)                                                                \
 	{.dev_spec = PWM_DT_SPEC_GET(pwm_dev_id),                                                  \
@@ -27,7 +27,6 @@ LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
 /* queue to store uart messages */
 K_MSGQ_DEFINE(uart_msgq, sizeof(struct mother_msg), 10, 1);
-
 
 /* DT spec for uart */
 static const struct device *const uart_dev = DEVICE_DT_GET(DT_ALIAS(mother_uart));
@@ -42,7 +41,6 @@ const struct device *const encoder_fl = DEVICE_DT_GET(DT_ALIAS(en_fl));
 /* DT spec for LED */
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
 
-
 /*---- Global Values and configuration ----*/
 
 /* Timeout message for diff drive */
@@ -52,9 +50,8 @@ struct DiffDriveTwist TIMEOUT_CMD = {
 };
 
 /* Velocity and PWM ranges */
-float vel_range[] = {-3,3};
+float vel_range[] = {-3, 3};
 uint32_t pwm_range[] = {1100000, 1900000};
-
 
 /* Serial Callback global variables */
 static uint8_t rx_buf[100];
@@ -63,7 +60,7 @@ static uint8_t tx_buf[UART_MSG_SIZE];
 
 /* Global ticks for encoders */
 int64_t ticks_fr, ticks_fl;
-
+struct mother_msg msg;
 
 void serial_cb(const struct device *dev, void *user_data)
 {
@@ -85,7 +82,7 @@ void serial_cb(const struct device *dev, void *user_data)
 			// uart_fifo_read(uart_dev, &c, 1);
 			/* terminate the message with 0x00 */
 			rx_buf[rx_buf_pos] = 0;
-			
+
 			if (rx_buf_pos != (sizeof(struct mother_msg) + 2 - 1)) {
 				rx_buf_pos = 0;
 				continue;
@@ -101,8 +98,8 @@ void serial_cb(const struct device *dev, void *user_data)
 		} else if (rx_buf_pos < (sizeof(rx_buf) - 1)) {
 			rx_buf[rx_buf_pos++] = c;
 		}
-		
-		if(rx_buf_pos > sizeof(struct mother_msg) + 2) {
+
+		if (rx_buf_pos > sizeof(struct mother_msg) + 2) {
 			rx_buf_pos = 0;
 			continue;
 		}
@@ -118,6 +115,22 @@ void send_to_uart(uint8_t *buf, uint8_t len)
 	for (int i = 0; i < len; i++) {
 		uart_poll_out(uart_dev, buf[i]);
 	}
+}
+
+/* Sends log to mother-uart */
+void log_uart(enum MotherMsgType type, const char *fmt, ...)
+{
+
+	va_list args;
+	va_start(args, fmt);
+
+	struct mother_msg log;
+	log.type = type;
+	vsprintf(log.info, fmt, args);
+	va_end(args);
+	log.crc = crc32_ieee((uint8_t *)&log, sizeof(struct mother_msg) - sizeof(uint32_t));
+	serialize(tx_buf, (uint8_t *)&log, sizeof(struct mother_msg));
+	send_to_uart(tx_buf, UART_MSG_SIZE);
 }
 
 /*
@@ -140,8 +153,7 @@ int valid_crc(struct mother_msg *msg)
 /*
  * Position feedback callback function
  * Returns 0 on success
- */ 
-
+ */
 
 int feedback_callback(float *feedback_buffer, int buffer_len, int wheels_per_side)
 {
@@ -149,12 +161,13 @@ int feedback_callback(float *feedback_buffer, int buffer_len, int wheels_per_sid
 	get_encoder_ticks(&ticks_fr, encoder_fr, &fr_val);
 	get_encoder_ticks(&ticks_fl, encoder_fl, &fl_val);
 
-	if (buffer_len < wheels_per_side*2)
+	if (buffer_len < wheels_per_side * 2) {
 		return 1;
+	}
 
 	for (int i = 0; i < wheels_per_side; i++) {
-	  feedback_buffer[i] = (float)ticks_fl / 4706 * 2 * 3.141592f;
-	  feedback_buffer[wheels_per_side + i] = (float)ticks_fr / 4706 * 2 * 3.141592f;
+		feedback_buffer[i] = (float)ticks_fl / 4706 * 2 * 3.141592f;
+		feedback_buffer[wheels_per_side + i] = (float)ticks_fr / 4706 * 2 * 3.141592f;
 	}
 	return 0;
 }
@@ -167,22 +180,27 @@ int feedback_callback(float *feedback_buffer, int buffer_len, int wheels_per_sid
 int velocity_callback(const float *velocity_buffer, int buffer_len, int wheels_per_side)
 {
 
-	if (buffer_len < wheels_per_side*2) return 1;
-	
-	for(int i = 0; i < wheels_per_side; i++) {
-		if(pwm_motor_write(&(motor[i]), velocity_pwm_interpolation(*(velocity_buffer + i), vel_range, pwm_range))) {
+	if (buffer_len < wheels_per_side * 2) {
+		return 1;
+	}
+
+	for (int i = 0; i < wheels_per_side; i++) {
+		if (pwm_motor_write(&(motor[i]),
+				    velocity_pwm_interpolation(*(velocity_buffer + i), vel_range,
+							       pwm_range))) {
 			LOG_ERR("Drive: Unable to write pwm pulse to Left : %d", i);
 			return 1;
 		}
-		if(pwm_motor_write(&(motor[i + wheels_per_side]), velocity_pwm_interpolation(*(velocity_buffer + wheels_per_side + i), vel_range, pwm_range))) {
+		if (pwm_motor_write(
+			    &(motor[i + wheels_per_side]),
+			    velocity_pwm_interpolation(*(velocity_buffer + wheels_per_side + i),
+						       vel_range, pwm_range))) {
 			LOG_ERR("Drive: Unable to write pwm pulse to Right : %d", i);
 			return 1;
 		}
-
 	}
 	return 0;
 }
-
 
 int main()
 {
@@ -192,30 +210,25 @@ int main()
 
 	/* Device ready checks */
 
-
 	if (!device_is_ready(uart_dev)) {
-		LOG_ERR("UART device not found!");
-		return 0;
+		log_uart(T_MOTHER_ERROR, "UART device not ready");
 	}
 
 	for (size_t i = 0U; i < ARRAY_SIZE(motor); i++) {
 		if (!pwm_is_ready_dt(&(motor[i].dev_spec))) {
-			printk("PWM: Motor %s is not ready\n", motor[i].dev_spec.dev->name);
-			return 0;
+			log_uart(T_MOTHER_ERROR, "PWM: Motor %s is not ready",
+				 motor[i].dev_spec.dev->name);
 		}
 	}
 	if (!device_is_ready(encoder_fl)) {
-		LOG_ERR("Encoder Front Left not ready\n");
-		return 0;
+		log_uart(T_MOTHER_ERROR, "Encoder Front Left not ready");
 	}
-	if(!device_is_ready(encoder_fr)) {
-		printk("Encoder Front Right not ready\n");
-		return 0;
+	if (!device_is_ready(encoder_fr)) {
+		log_uart(T_MOTHER_ERROR, "Encoder Front Right not ready");
 	}
 
 	if (!gpio_is_ready_dt(&led)) {
-		LOG_ERR("Error: Led not ready.");
-		return 0;
+		log_uart(T_MOTHER_ERROR, "Led not ready");
 	}
 
 	/* Configure devices */
@@ -224,72 +237,73 @@ int main()
 
 	if (err < 0) {
 		if (err == -ENOTSUP) {
-			LOG_ERR("Interrupt-driven UART API support not enabled");
+			log_uart(T_MOTHER_ERROR, "Interrupt-driven UART API support not enabled");
 		} else if (err == -ENOSYS) {
-			LOG_ERR("UART device does not support interrupt-driven API");
+			log_uart(T_MOTHER_ERROR,
+				 "UART device does not support interrupt-driven API");
 		} else {
-			LOG_ERR("Error setting UART callback: %d", err);
+			log_uart(T_MOTHER_ERROR, "Error setting UART callback: %d", err);
 		}
-		return 0;
 	}
 	uart_irq_rx_enable(uart_dev);
 
 	if (gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE) < 0) {
-		LOG_ERR("Error: Led not configured");
-		return 0;
+		log_uart(T_MOTHER_ERROR, "Led not configured");
 	}
 
 	struct DiffDriveConfig drive_config = {
-				.wheel_separation = 0.4f,
-				.wheel_separation_multiplier = 1,
-				.wheel_radius = 0.15f,
-				.wheels_per_side = 2,
-				.command_timeout_seconds = 2,
-				.left_wheel_radius_multiplier = 1,
-				.right_wheel_radius_multiplier = 1,
-				.update_type = POSITION_FEEDBACK,
+		.wheel_separation = 0.57f,
+		.wheel_separation_multiplier = 1,
+		.wheel_radius = 0.15f,
+		.wheels_per_side = 2,
+		.command_timeout_seconds = 2,
+		.left_wheel_radius_multiplier = 1,
+		.right_wheel_radius_multiplier = 1,
+		.update_type = POSITION_FEEDBACK,
 	};
 
-	struct DiffDrive* drive = diffdrive_init(&drive_config, feedback_callback, velocity_callback);
+	struct DiffDrive *drive =
+		diffdrive_init(&drive_config, feedback_callback, velocity_callback);
 
 	int64_t time_last_drive_update = 0;
 	int64_t drive_timestamp = 0;
 
-	LOG_INF("Initialization completed successfully");
-
-	struct mother_msg msg;
+	log_uart(T_MOTHER_INFO, "Initialization completed successfully");
 
 	while (true) {
 		/* Send status */
 		struct DiffDriveStatus ds = diffdrive_status(drive);
-		struct mother_status_msg s_msg = {.odom = ds};
-		struct mother_msg status_msg = {.type = T_MOTHER_STATUS, .status = s_msg };
-		uint32_t crc = crc32_ieee((uint8_t*) &status_msg, sizeof(struct mother_msg) - sizeof(uint32_t));
+		struct mother_status_msg s_msg = {.odom = ds,
+						  .arm_joint_status = {0.0f, 0.0f, 0.0f},
+						  .timestamp = k_uptime_get()};
+		struct mother_msg status_msg = {.type = T_MOTHER_STATUS, .status = s_msg};
+		uint32_t crc = crc32_ieee((uint8_t *)&status_msg,
+					  sizeof(struct mother_msg) - sizeof(uint32_t));
 		status_msg.crc = crc;
 
-		serialize(tx_buf, (uint8_t*)&status_msg, sizeof(struct mother_msg));
+		serialize(tx_buf, (uint8_t *)&status_msg, sizeof(struct mother_msg));
 		send_to_uart(tx_buf, UART_MSG_SIZE);
 
 		if (k_msgq_get(&uart_msgq, &msg, K_SECONDS(2))) {
 			/* Send stop to all */
-
+			log_uart(T_MOTHER_INFO, "Message Timeout");
 			drive_timestamp = k_uptime_get();
 			diffdrive_update(drive, TIMEOUT_CMD, drive_timestamp);
 			time_last_drive_update = k_uptime_get() - drive_timestamp;
-			
+
 			continue;
 		}
 
 		if (!valid_crc(&msg)) {
+			log_uart(T_MOTHER_ERROR, "Invalid CRC");
 			continue;
 		}
-
 
 		switch (msg.type) {
 		case T_MOTHER_CMD_DRIVE:
 			drive_timestamp = k_uptime_get();
 			diffdrive_update(drive, msg.cmd.drive_cmd, time_last_drive_update);
-			time_last_drive_update = k_uptime_get() - drive_timestamp; 
+			time_last_drive_update = k_uptime_get() - drive_timestamp;
 		}
 		gpio_pin_toggle_dt(&led);
 	}

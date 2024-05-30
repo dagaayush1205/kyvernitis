@@ -9,13 +9,10 @@
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/sys/crc.h>
 #include <zephyr/drivers/uart.h>
-#include <zephyr/logging/log.h>
 #include <app_version.h>
 #include <string.h>
 #include <canscribe/lib/canscribe.h>
 #include <kyvernitis/lib/kyvernitis.h>
-
-LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
 /* msg size in relation to cobs serialization */
 #define UART_MSG_SIZE (sizeof(struct mother_msg) + 2)
@@ -188,14 +185,16 @@ int velocity_callback(const float *velocity_buffer, int buffer_len, int wheels_p
 		if (pwm_motor_write(&(motor[i]),
 				    velocity_pwm_interpolation(*(velocity_buffer + i), vel_range,
 							       pwm_range))) {
-			LOG_ERR("Drive: Unable to write pwm pulse to Left : %d", i);
+			log_uart(T_MOTHER_ERROR, "Drive: Unable to write pwm pulse to Left : %d",
+				 i);
 			return 1;
 		}
 		if (pwm_motor_write(
 			    &(motor[i + wheels_per_side]),
 			    velocity_pwm_interpolation(*(velocity_buffer + wheels_per_side + i),
 						       vel_range, pwm_range))) {
-			LOG_ERR("Drive: Unable to write pwm pulse to Right : %d", i);
+			log_uart(T_MOTHER_ERROR, "Drive: Unable to write pwm pulse to Right : %d",
+				 i);
 			return 1;
 		}
 	}
@@ -204,7 +203,7 @@ int velocity_callback(const float *velocity_buffer, int buffer_len, int wheels_p
 
 int main()
 {
-	printk("\nMother: v%s\n\n", APP_VERSION_STRING);
+	log_uart(T_MOTHER_INFO, "Mother: v%s", APP_VERSION_STRING);
 
 	int err;
 
@@ -288,9 +287,12 @@ int main()
 			/* Send stop to all */
 			log_uart(T_MOTHER_INFO, "Message Timeout");
 			drive_timestamp = k_uptime_get();
-			diffdrive_update(drive, TIMEOUT_CMD, drive_timestamp);
+			err = diffdrive_update(drive, TIMEOUT_CMD, drive_timestamp);
 			time_last_drive_update = k_uptime_get() - drive_timestamp;
 
+			if (err) {
+				log_uart(T_MOTHER_ERROR, "Diffdrive Update Failue");
+			}
 			continue;
 		}
 
@@ -304,6 +306,10 @@ int main()
 			drive_timestamp = k_uptime_get();
 			diffdrive_update(drive, msg.cmd.drive_cmd, time_last_drive_update);
 			time_last_drive_update = k_uptime_get() - drive_timestamp;
+
+			if (err) {
+				log_uart(T_MOTHER_ERROR, "Diffdrive Update Failue");
+			}
 		}
 		gpio_pin_toggle_dt(&led);
 	}

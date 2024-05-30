@@ -31,19 +31,19 @@ struct DiffDrive {
 	int (*velocity_callback)(const float *velocity_buffer, int buffer_len, int wheels_per_side);
 };
 
-struct FloatRollingMeanAccumulator* float_rolling_mean_accumulator_init(int rolling_window_size);
-struct DiffDriveOdometry* diffdrive_odometry_init(struct DiffDriveOdometryConfig config);
+struct FloatRollingMeanAccumulator *float_rolling_mean_accumulator_init(int rolling_window_size);
+struct DiffDriveOdometry *diffdrive_odometry_init(struct DiffDriveOdometryConfig config);
 struct DiffDrive *diffdrive_init(struct DiffDriveConfig *config,
-		     int (*feedback_callback)(float *feedback_buffer, int buffer_len,
-					      int wheels_per_side),
-		     int (*velocity_callback)(const float *velocity_buffer, int buffer_len,
-					      int wheels_per_side))
+				 int (*feedback_callback)(float *feedback_buffer, int buffer_len,
+							  int wheels_per_side),
+				 int (*velocity_callback)(const float *velocity_buffer,
+							  int buffer_len, int wheels_per_side))
 {
 	struct DiffDriveOdometryConfig odom_config = {.wheel_separation = config->wheel_separation,
 						      .left_wheel_radius = config->wheel_radius,
 						      .right_wheel_radius = config->wheel_radius,
 						      .velocity_rolling_window_size = 10};
-	struct DiffDriveOdometry* odom = diffdrive_odometry_init(odom_config);
+	struct DiffDriveOdometry *odom = diffdrive_odometry_init(odom_config);
 	struct DiffDrive drive = {.previous_update_timestamp = 0,
 				  .odometry = odom,
 				  .feedback_callback = feedback_callback,
@@ -54,7 +54,8 @@ struct DiffDrive *diffdrive_init(struct DiffDriveConfig *config,
 	return (void *)heap_drive;
 }
 
-struct DiffDriveStatus diffdrive_status(struct DiffDrive *drive) {
+struct DiffDriveStatus diffdrive_status(struct DiffDrive *drive)
+{
 	struct DiffDriveStatus status = {.x = drive->odometry->x,
 					 .y = drive->odometry->y,
 					 .heading = drive->odometry->heading,
@@ -62,9 +63,16 @@ struct DiffDriveStatus diffdrive_status(struct DiffDrive *drive) {
 					 .angular = drive->odometry->angular};
 	return status;
 }
-void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
-		      int64_t time_taken_by_last_update_seconds)
+
+/*
+ * Updates Diff Drive commands and odometry
+ * Returns 0 on success
+ */
+
+int diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
+		     int64_t time_taken_by_last_update_seconds)
 {
+	int ret = 0;
 	// Get time since last update
 	if (k_uptime_delta(&drive->previous_update_timestamp) / 1000 >
 	    drive->config.command_timeout_seconds) {
@@ -90,7 +98,7 @@ void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
 	if (drive->feedback_callback(feedback, feedback_buffer_size,
 				     drive->config.wheels_per_side)) {
 		// ERROR: Something went wrong while getting feedback
-		assert(false);
+		ret = 1;
 	}
 	for (int i = 0; i < drive->config.wheels_per_side; i++) {
 		const float left_feedback = feedback[i];
@@ -98,7 +106,7 @@ void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
 
 		if (isnan(left_feedback) || isnan(right_feedback)) {
 			// ERROR: One of the wheels gives invalid feedback
-		assert(false);
+			ret = 1;
 		}
 
 		left_feedback_mean += left_feedback;
@@ -109,7 +117,8 @@ void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
 	right_feedback_mean /= drive->config.wheels_per_side;
 
 	if (drive->config.update_type == POSITION_FEEDBACK) {
-		diffdrive_odometry_update(drive->odometry, left_feedback_mean, right_feedback_mean, drive->previous_update_timestamp);
+		diffdrive_odometry_update(drive->odometry, left_feedback_mean, right_feedback_mean,
+					  drive->previous_update_timestamp);
 	} else {
 		diffdrive_odometry_update_from_velocity(drive->odometry,
 							left_feedback_mean * left_wheel_radius *
@@ -132,9 +141,10 @@ void diffdrive_update(struct DiffDrive *drive, struct DiffDriveTwist command,
 	if (drive->velocity_callback(velocity_buffer, feedback_buffer_size,
 				     drive->config.wheels_per_side)) {
 		// ERROR: Something went wrong writing the velocities
-		assert(false);
+		ret = 1;
 	}
 	free(velocity_buffer);
+	return ret;
 }
 
 struct FloatRollingMeanAccumulator {
@@ -145,7 +155,7 @@ struct FloatRollingMeanAccumulator {
 	int buffer_filled;
 };
 
-struct FloatRollingMeanAccumulator* float_rolling_mean_accumulator_init(int rolling_window_size)
+struct FloatRollingMeanAccumulator *float_rolling_mean_accumulator_init(int rolling_window_size)
 {
 	float *buffer = calloc(rolling_window_size, sizeof(float));
 	struct FloatRollingMeanAccumulator frma = {.buffer = buffer,
@@ -202,7 +212,7 @@ void diffdrive_odometry_integrate_exact(struct DiffDriveOdometry *odom, float li
 	}
 }
 
-struct DiffDriveOdometry* diffdrive_odometry_init(struct DiffDriveOdometryConfig config)
+struct DiffDriveOdometry *diffdrive_odometry_init(struct DiffDriveOdometryConfig config)
 {
 	struct FloatRollingMeanAccumulator *linear_frma =
 		float_rolling_mean_accumulator_init(config.velocity_rolling_window_size);
@@ -227,7 +237,7 @@ struct DiffDriveOdometry* diffdrive_odometry_init(struct DiffDriveOdometryConfig
 int diffdrive_odometry_update_from_velocity(struct DiffDriveOdometry *odom, float left_vel,
 					    float right_vel, const int64_t time)
 {
-	const float dt = (time - odom->last_command_timestamp)/1000;
+	const float dt = (time - odom->last_command_timestamp) / 1000;
 	const float linear = (left_vel + right_vel) * 0.5f;
 	const float angular = (right_vel - left_vel) / odom->config.wheel_separation;
 
@@ -245,7 +255,7 @@ int diffdrive_odometry_update_from_velocity(struct DiffDriveOdometry *odom, floa
 int diffdrive_odometry_update(struct DiffDriveOdometry *odom, float left_pos, float right_pos,
 			      const int64_t time)
 {
-	const float dt = (time - odom->last_command_timestamp)/1000;
+	const float dt = (time - odom->last_command_timestamp) / 1000;
 	if (dt < 0.0001) {
 		return false;
 	}
@@ -279,23 +289,24 @@ void diffdrive_odometry_reset_accumulators(struct DiffDriveOdometry *odom)
  * Velocity to PWM linear interpolation
  */
 
-uint32_t velocity_pwm_interpolation(float velocity, float* vel_range, uint32_t* pwm_range) {
-	if(velocity > vel_range[1]) {
+uint32_t velocity_pwm_interpolation(float velocity, float *vel_range, uint32_t *pwm_range)
+{
+	if (velocity > vel_range[1]) {
 		return pwm_range[1];
 	}
-	
-	if(velocity < vel_range[0]) {
+
+	if (velocity < vel_range[0]) {
 		return pwm_range[0];
 	}
-	
-	if(abs((int)velocity*100) == 0){
-		return (uint32_t)((pwm_range[0] + pwm_range[1])/2);
+
+	if (abs((int)velocity * 100) == 0) {
+		return (uint32_t)((pwm_range[0] + pwm_range[1]) / 2);
 	}
 
 	float dvel = vel_range[1] - vel_range[0];
 	float dpwm = pwm_range[1] - pwm_range[0];
-	
-	uint32_t pwm_interp = pwm_range[0] + (dpwm/dvel)*(velocity - vel_range[0]);
+
+	uint32_t pwm_interp = pwm_range[0] + (dpwm / dvel) * (velocity - vel_range[0]);
 
 	return pwm_interp;
 }

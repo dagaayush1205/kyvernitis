@@ -1,0 +1,190 @@
+/ {
+	pwmmotors {
+		compatible = "pwm-motors";
+		sabertooth1_1: pwm_1 {
+			pwms  = <&pwm1 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1100)>;
+			max-pulse = <PWM_USEC(1900)>;
+		};
+		sabertooth1_2: pwm_2 {
+			pwms  = <&pwm1 2 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1100)>;
+			max-pulse = <PWM_USEC(1900)>;
+		};
+		sabertooth3_1: pwm_3 {
+			pwms  = <&pwm1 3 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1100)>;
+			max-pulse = <PWM_USEC(1900)>;
+		};
+		sabertooth3_2: pwm_4 {
+			pwms  = <&pwm1 4 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1100)>;
+			max-pulse = <PWM_USEC(1900)>;
+		};
+		cytron1_1: pwm_5 {
+			pwms  = <&pwm2 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1100)>;
+			max-pulse = <PWM_USEC(1900)>;
+		};
+		cytron1_2: pwm_6 {
+			pwms  = <&pwm2 2 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1100)>;
+			max-pulse = <PWM_USEC(1900)>;
+		};
+		cytron3_1: pwm_7 {
+			pwms  = <&pwm2 3 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1100)>;
+			max-pulse = <PWM_USEC(1900)>;
+		};
+		cytron3_2: pwm_8 {
+			pwms  = <&pwm2 4 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1100)>;
+			max-pulse = <PWM_USEC(1900)>;
+		};
+		servo_1: pwm_9 {
+			pwms  = <&pwm10 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1100)>;
+			max-pulse = <PWM_USEC(1900)>;
+		};
+		servo_2: pwm_10 {
+			pwms  = <&pwm11 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1100)>;
+			max-pulse = <PWM_USEC(1900)>;
+		};
+		servo_3: pwm_11 {
+			pwms  = <&pwm14 1 PWM_MSEC(20) (PWM_POLARITY_NORMAL)>;
+			min-pulse = <PWM_USEC(1100)>;
+			max-pulse = <PWM_USEC(1900)>;
+		};
+	};
+
+	aliases {
+		mother-uart = &usart2;
+		en-fr = &qenc_fr;
+		en-fl = &qenc_fl;
+	};
+};
+
+&usart1 {
+	current-speed = <921600>;
+};
+
+&usart2 {
+	pinctrl-0 = <&usart2_tx_pd5 &usart2_rx_pd6>;
+	pinctrl-names = "default";
+	current-speed = <921600>;
+	status = "okay";
+};
+
+&timers1 {
+	status = "okay";
+	st,prescaler = <3359>;
+
+	pwm1: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim1_ch1_pe9 &tim1_ch2_pe11 &tim1_ch3_pe13 &tim1_ch4_pe14>;
+		pinctrl-names = "default";
+	};
+};
+
+&timers2 {
+	status = "okay";
+	st,prescaler = <3359>;
+
+	pwm2: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim2_ch1_pa5 &tim2_ch2_pa1 &tim2_ch3_pa2 &tim2_ch4_pa3>;
+		pinctrl-names = "default";
+	};
+};
+
+&timers10 {
+	status = "okay";
+	st,prescaler = <3359>;
+
+	pwm10: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim10_ch1_pb8>;
+		pinctrl-names = "default";
+	};
+};
+
+&timers11 {
+	status = "okay";
+	st,prescaler = <3359>;
+
+	pwm11: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim11_ch1_pb9>;
+		pinctrl-names = "default";
+	};
+};
+
+&timers14 {
+	status = "okay";
+	st,prescaler = <3359>;
+
+	pwm14: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim14_ch1_pa7>;
+		pinctrl-names = "default";
+	};
+};
+
+&timers3 {
+	status = "okay";
+	qenc_fr: qdec {
+		compatible = "st,stm32-qdec-distance";
+		status = "okay";
+		pinctrl-0 = <&tim3_ch1_pc6 &tim3_ch2_pc7>;
+		pinctrl-names = "default";
+		st,input-polarity-inverted;
+		st,input-filter-level = <FDIV32_N5>;
+		st,counts-per-revolution = <4706>;
+	};
+};
+
+&timers4 {
+	status = "okay";
+	qenc_fl: qdec {
+		compatible = "st,stm32-qdec-distance";
+		status = "okay";
+		pinctrl-0 = <&tim4_ch1_pd12 &tim4_ch2_pd13>;
+		pinctrl-names = "default";
+		st,input-polarity-inverted;
+		st,input-filter-level = <FDIV32_N5>;
+		st,counts-per-revolution = <4706>;
+	};
+};
+
+&i2c1 {
+	status = "okay";
+	pinctrl-0  = <&i2c1_scl_pb6 &i2c1_sda_pb7>;
+	pinctrl-names = "default";
+	mpu6050@68 {
+		compatibe = "invensense,mpu6050";
+		reg = <0x68>;
+		status = "okay";
+	};
+	mpu6050@69 {
+		compatibe = "invensense,mpu6050";
+		reg = <0x69>;
+		status = "okay";
+	};
+};
+
+&i2c2 {
+	status = "okay";
+	pinctrl-0  = <&i2c2_scl_pb10 &i2c2_sda_pb11>;
+	pinctrl-names = "default";
+	mpu6050@68 {
+		compatibe = "invensense,mpu6050";
+		reg = <0x68>;
+		status = "okay";
+	};
+	mpu6050@69 {
+		compatibe = "invensense,mpu6050";
+		reg = <0x69>;
+		status = "okay";
+	};
+};

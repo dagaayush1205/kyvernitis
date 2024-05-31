@@ -12,7 +12,7 @@
 #include <app_version.h>
 
 #include <kycan.h>
-#include <kyvernitis.h>
+#include <kyvernitis/lib/kyvernitis.h>
 
 #define L298N_COUNT 4
 #define L298N_LIM_COUNT 2

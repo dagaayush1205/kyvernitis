@@ -1,4 +1,5 @@
-#include <kyvernitis.h>
+#include <kyvernitis/lib/kyvernitis.h>
+#include <math.h>
 
 // Wrapper around pwm_set_pulse_dt to ensure that pulse_width
 // remains under max-min range
@@ -128,4 +129,19 @@ float MQ136_readings(int adc_reading) {
 float MQ137_readings(int adc_reading) {
 	float ppm = adc_reading * (500.0 - 5.0) / 4096.0;
 	return ppm;
+}
+
+void get_encoder_ticks(int64_t *ticks, const struct device *const dev, struct sensor_value *val) {
+	int rc;
+	rc = sensor_sample_fetch(dev);
+	if (rc != 0) {
+		printk("Failed to fetch sample (%d)\n", rc);
+	}
+
+	rc = sensor_channel_get(dev, SENSOR_CHAN_ALL, val);
+	if (rc != 0) {
+		printk("Failed to get data (%d)\n", rc);
+	}
+	
+	*ticks = val->val1 * pow(10,6) + val->val2;
 }

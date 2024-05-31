@@ -18,7 +18,7 @@
 #include <stm32_ll_tim.h>
 #include <math.h>
 
-LOG_MODULE_REGISTER(qdec_stm32, CONFIG_SENSOR_LOG_LEVEL);
+LOG_MODULE_REGISTER(qdec_stm32_distance, CONFIG_SENSOR_LOG_LEVEL);
 
 #define HALF_INT32_MAX INT32_MAX/2
 
